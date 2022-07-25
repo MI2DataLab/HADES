@@ -14,6 +14,9 @@ scipy = "^1.8.1"
 gensim = "^4.2.0"
 swifter = "^1.2.0"
 en-core-web-lg = {url = "https://github.com/explosion/spacy-models/releases/download/en_core_web_lg-3.3.0/en_core_web_lg-3.3.0-py3-none-any.whl"}
+PyPDF2 = "^2.6.0"
+matplotlib = "^3.5.2"
+seaborn = "^0.11.2"
 
 [tool.poetry.dev-dependencies]
 
