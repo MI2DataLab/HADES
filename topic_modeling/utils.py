@@ -12,7 +12,7 @@ def check_coherence(
     df: pd.DataFrame,
     filter_dict: Dict[str, str],
     common_words_filtered: List[str],
-    topic_numbers_range: Tuple[int, int] = (2, 10),
+    topic_numbers_range: Tuple[int, int] = (2, 11),
     passes: int = 8,
     iterations: int = 100,
     random_state: Optional[int] = None,
@@ -21,7 +21,7 @@ def check_coherence(
     lemmas_dictionary = get_lemmas_dictionary(filtered_lemmas)
     encoded_docs = filtered_lemmas.apply(lemmas_dictionary.doc2bow)
     models = get_lda_models(encoded_docs, topic_numbers_range, passes, iterations, random_state)
-    cvs = get_coherences(models, filtered_lemmas, filter_dict)
+    cvs = get_coherences(models, filtered_lemmas, lemmas_dictionary)
     return (
         filtered_lemmas,
         models,
@@ -48,11 +48,12 @@ def get_filtered_lemmas(
 def get_lemmas_dictionary(filtered_lemmas: pd.Series):
     lemmas_dictionary = Dictionary(filtered_lemmas)
     lemmas_dictionary.filter_extremes(no_below=4, no_above=1)
+    return lemmas_dictionary
 
 
 def get_lda_models(
     corpus: Union[pd.Series, List[List[str]]],
-    topic_numbers_range: Tuple[int, int] = (3, 13),
+    topic_numbers_range: Tuple[int, int] = (2, 11),
     passes: int = 8,
     iterations: int = 100,
     random_state: Optional[int] = None,
@@ -65,7 +66,7 @@ def get_lda_models(
             iterations=iterations,
             random_state=random_state,
         )
-        for topic_numbers in tqdm(topic_numbers_range)
+        for topic_numbers in tqdm(range(*topic_numbers_range))
     ]
 
 
@@ -74,5 +75,5 @@ def get_coherences(
 ) -> List[float]:
     return [
         CoherenceModel(model, texts=texts, dictionary=dictionary).get_coherence()
-        for model in models
+        for model in tqdm(models)
     ]
