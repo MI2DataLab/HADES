@@ -1,8 +1,9 @@
 import os
+import re
 
 import pandas as pd
 from PyPDF2 import PdfFileReader
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 
 
 def get_table_of_contents(path: str, toc: str = "Table of Contents") -> Tuple[str, int]:
@@ -18,7 +19,9 @@ def get_table_of_contents(path: str, toc: str = "Table of Contents") -> Tuple[st
     return text, toc_page
 
 
-def get_paragraphs_df(toc: str, toc_page: int, paragraphs_names: Dict[str, List[str]], end_paragraph: str) -> pd.DataFrame:
+def get_paragraphs_df(
+    toc: str, pages_shift: int, paragraphs_names: Dict[str, List[str]], end_paragraph: str
+) -> pd.DataFrame:
     lines = toc.split("\n")
     rows = {"paragraph": [], "start_page": [], "end_page": [], "start_text": [], "end_text": []}
     for key, paragraphs in paragraphs_names.items():
@@ -28,17 +31,27 @@ def get_paragraphs_df(toc: str, toc_page: int, paragraphs_names: Dict[str, List[
                 continue
             paragraph_line = paragraph_line[0]
             try:
-                start_page = int(paragraph_line.replace(" ", "")[-3:].replace(".", "")) + toc_page
+                start_page = (
+                    int(
+                        re.sub(
+                            "[^0-9]+",
+                            "",
+                            paragraph_line[paragraph_line.find(paragraph) + len(paragraph):],
+                        )
+                    )
+                    + pages_shift
+                )
             except:
                 break
             if len(rows["start_page"]) > 0:
                 rows["end_page"].append(start_page)
                 rows["end_text"].append(paragraph)
-            if key!=end_paragraph:
+            if key != end_paragraph:
                 rows["paragraph"].append(key)
                 rows["start_page"].append(start_page)
                 rows["start_text"].append(paragraph)
     return pd.DataFrame(rows)
+
 
 def read_pages_from_pdf(path: str, start_page: int, end_page: int) -> str:
     file = open(path, "rb")
@@ -50,6 +63,7 @@ def read_pages_from_pdf(path: str, start_page: int, end_page: int) -> str:
         count += 1
         text += pageObj.extractText().replace("\n", "")
     return text
+
 
 def read_paragraphs(df: pd.DataFrame, path: str, country: str, root: str = "") -> pd.DataFrame:
     result_dict = {"paragraph": [], "country": [], "text_path": []}
@@ -83,17 +97,20 @@ def process_all_documents(
     save_txt: str,
     end_paragraph: str,
     toc_str: str = "Table of Contents",
+    pages_shift: Optional[int] = None,
 ) -> pd.DataFrame:
-    """Process documents from directory_path with 
+    """Process documents from directory_path with
     table of contents with paragraph names and pages
 
     Args:
         directory_path (str): directory with documents to process
-        paragraphs_names (Dict[str, List[str]]): key - name of pargraph that should 
+        paragraphs_names (Dict[str, List[str]]): key - name of pargraph that should
         be displayed in the final df, value - list of possible names of this paragraph in toc
         save_txt (str): path to directory where txt files should be saved
         end_paragraph (str): last paragraph of the text that should not be present in final df
         toc_str (str, optional): name of table of contents in documents. Defaults to "Table of Contents".
+        pages_shift (int, optional): difference between page number in table of contents and in pdf file.
+            Defaults to None which will be interpreted as pages_shift = page of toc
 
     Returns:
         pd.DataFrame: data frame with desired format
@@ -103,7 +120,9 @@ def process_all_documents(
     df = pd.DataFrame({"paragraph": [], "country": [], "text_path": []})
     for doc in dir_list:
         toc, toc_page = get_table_of_contents(directory_path + doc, toc_str)
-        paragraphs_df = get_paragraphs_df(toc, toc_page, paragraphs_names, end_paragraph)
+        paragraphs_df = get_paragraphs_df(
+            toc, pages_shift or toc_page, paragraphs_names, end_paragraph
+        )
         doc_df = read_paragraphs(paragraphs_df, directory_path + "/" + doc, doc[:-4], save_txt)
         df = pd.concat([df, doc_df], ignore_index=True)
     return df
