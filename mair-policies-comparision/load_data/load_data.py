@@ -9,15 +9,15 @@ import swifter
 
 
 def read_txt(path: str) -> str:
-    with open(path, encoding='utf-8') as f:
+    with open(path, encoding="utf-8") as f:
         lines = f.readlines()
-    return lines[0] if len(lines)>0 else ""
+    return lines[0] if len(lines) > 0 else ""
 
 
-def load_dataframe(path: str) -> pd.DataFrame:
+def load_dataframe(path: str, text_path_col: str = "text_path") -> pd.DataFrame:
     df = pd.read_csv(path, index_col=0)
-    assert "text_path" in df.columns
-    df["text"] = df["text_path"].apply(read_txt)
+    assert text_path_col in df.columns
+    df["text"] = df[text_path_col].apply(read_txt)
     return df
 
 

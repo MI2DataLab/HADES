@@ -3,6 +3,10 @@ name = "mair-policies-comparision"
 version = "0.1.0"
 description = ""
 authors = ["arturzolkowski <artur.zolkowski@wp.pl>"]
+packages = [
+    { include = "mair-policies-comparision", from="."},
+    { include = "mair-policies-comparision/**/*.py", from="."},
+]
 
 [tool.poetry.dependencies]
 python = "^3.10,<3.11"
