@@ -1,22 +1,21 @@
 from typing import Dict, List, Optional, Tuple, Union
-from tqdm import tqdm
 
+import pandas as pd
 from gensim.corpora.dictionary import Dictionary
 from gensim.models import CoherenceModel
 from gensim.models.ldamulticore import LdaMulticore
+from tqdm import tqdm
 
-import pandas as pd
 
-
-def check_coherence(
+def check_coherence_for_topics_num(
     df: pd.DataFrame,
     filter_dict: Dict[str, str],
-    common_words_filtered: List[str],
+    common_words_filtered: List[str] = [],
     topic_numbers_range: Tuple[int, int] = (2, 11),
     passes: int = 8,
     iterations: int = 100,
     random_state: Optional[int] = None,
-):
+) -> Tuple[pd.Series, List[LdaMulticore], pd.Series, Dictionary, List[float]]:
     filtered_lemmas = get_filtered_lemmas(df, filter_dict, common_words_filtered)
     lemmas_dictionary = get_lemmas_dictionary(filtered_lemmas)
     encoded_docs = filtered_lemmas.apply(lemmas_dictionary.doc2bow)
@@ -35,7 +34,7 @@ def get_filtered_lemmas(
     df: pd.DataFrame,
     filter_dict: Dict[str, str],
     common_words_filtered: List[str],
-):
+) -> pd.Series:
     filtered_lemmas = df.loc[(df[list(filter_dict)] == pd.Series(filter_dict)).all(axis=1)][
         "lemmas"
     ].copy()
@@ -57,7 +56,7 @@ def get_lda_models(
     passes: int = 8,
     iterations: int = 100,
     random_state: Optional[int] = None,
-):
+) -> List[LdaMulticore]:
     return [
         LdaMulticore(
             corpus,
