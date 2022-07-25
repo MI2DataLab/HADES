@@ -12,7 +12,7 @@ def check_coherence(
     df: pd.DataFrame,
     filter_dict: Dict[str, str],
     common_words_filtered: List[str],
-    topic_numbers_range: Tuple[int, int] = (3, 13),
+    topic_numbers_range: Tuple[int, int] = (2, 10),
     passes: int = 8,
     iterations: int = 100,
     random_state: Optional[int] = None,
@@ -36,7 +36,7 @@ def get_filtered_lemmas(
     filter_dict: Dict[str, str],
     common_words_filtered: List[str],
 ):
-    filtered_lemmas = df[(df[key] == value for key, value in filter_dict.items())][
+    filtered_lemmas = df.loc[(df[list(filter_dict)] == pd.Series(filter_dict)).all(axis=1)][
         "lemmas"
     ].copy()
     filtered_lemmas = filtered_lemmas.apply(
@@ -47,9 +47,7 @@ def get_filtered_lemmas(
 
 def get_lemmas_dictionary(filtered_lemmas: pd.Series):
     lemmas_dictionary = Dictionary(filtered_lemmas)
-    lemmas_dictionary.filter_extremes(
-        no_below=4, no_above=1
-    )
+    lemmas_dictionary.filter_extremes(no_below=4, no_above=1)
 
 
 def get_lda_models(

@@ -25,7 +25,9 @@ def plot_counter_lemmas(
     color: str = "lightblue",
     figsize: tuple = (20, 13),
 ):
-    filtered_lemmas = df[(df[key] == value for key, value in filter_dict.items())]["lemmas"]
+    filtered_lemmas = df.loc[(df[list(filter_dict)] == pd.Series(filter_dict)).all(axis=1)][
+        "lemmas"
+    ]
     counter = Counter(filtered_lemmas.sum()).most_common(number)
     plot_counter(counter, orient, color, figsize)
     plt.show()
