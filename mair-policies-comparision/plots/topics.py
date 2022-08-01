@@ -1,5 +1,6 @@
 from collections import Counter
 from typing import List, Optional, Tuple
+import numpy as np
 
 import pandas as pd
 import pyLDAvis.gensim_models
@@ -40,7 +41,6 @@ def plot_topics(
     df = _topics_df(model, docs, num_words)
     fig, axes = plt.subplots(x, y, figsize=figsize, sharey=False)
     cols = [color for name, color in colors.TABLEAU_COLORS.items()]
-    topics = model.show_topics(formatted=False, num_words=num_words)
     for i, ax in enumerate(axes.flatten()):
         ax.bar(
             x="word",
@@ -81,7 +81,7 @@ def plot_topics(
     return fig
 
 
-def plot_similarities(similarities, topic_probs, linkage):
+def plot_similarities(similarities: np.ndarray, topic_probs: pd.DataFrame, linkage: np.ndarray):
     plt.figure(figsize=(12, 8))
     sns.clustermap(
         1 - similarities,
@@ -90,4 +90,34 @@ def plot_similarities(similarities, topic_probs, linkage):
         row_linkage=linkage,
         col_linkage=linkage,
     )
+    plt.show()
+
+
+def plot_hierarchical_clustering(distance_matrix: pd.DataFrame, linkage: np.ndarray):
+    plt.figure(figsize=(12, 8))
+    sns.clustermap(
+        distance_matrix,
+        xticklabels=distance_matrix.index,
+        yticklabels=distance_matrix.index,
+        row_linkage=linkage,
+        col_linkage=linkage,
+    )
+    plt.show()
+
+
+def plot_tsne(tsne_result_df: pd.DataFrame, hue: np.ndarray, palette: str = "pastel"):
+    plt.figure(figsize=(12, 10))
+    fig = sns.scatterplot(
+        x="c1", y="c2", data=tsne_result_df, legend=False, hue=hue, palette=palette
+    )
+    for line in range(0, tsne_result_df.shape[0]):
+        fig.text(
+            tsne_result_df.c1[line] + 0.01,
+            tsne_result_df.c2[line],
+            tsne_result_df.index[line],
+            horizontalalignment="left",
+            size="medium",
+            color="black",
+            weight="light",
+        )
     plt.show()
