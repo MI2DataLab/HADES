@@ -1,4 +1,5 @@
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Union
+import warnings
 
 import numpy as np
 import pandas as pd
@@ -35,7 +36,7 @@ def calculate_linkage_matrix(
     return hc.linkage(topic_probs, method=method, metric=metric)
 
 
-def calculate_distance_matrix(topic_probs: pd.DataFrame, metric: str = "ir") -> pd.DataFrame:
+def calculate_distance_matrix(topic_probs: pd.DataFrame, metric: str = "hd") -> pd.DataFrame:
     if metric == "ir":
         metric = lambda p, q: np.sum(p * np.log(2 * p / (p + q))) + np.sum(
             q * np.log(2 * q / (p + q))
@@ -66,7 +67,7 @@ def shift_similarity(
         ].loc[:, np.arange(num_topics)]
         df2 = modeling_results.loc[
             (modeling_results["country"] == country)
-            & (modeling_results[list(filter_dicts[0])] == pd.Series(filter_dicts[0])).all(axis=1)
+            & (modeling_results[list(filter_dicts[1])] == pd.Series(filter_dicts[1])).all(axis=1)
         ].loc[:, np.arange(num_topics)]
         if df1.shape[0] == 1:
             dimension_change["country"].append(country)
@@ -81,30 +82,42 @@ def shift_similarity(
     return pd.DataFrame(dimension_change)
 
 
-def topic_probs_by_country_binded(modeling_results: pd.DataFrame, num_topics: int) -> pd.DataFrame:
-    topic_probs_by_country_binded = []
-    countries_added = []
-    countries = modeling_results.country.unique()
-    for country in countries:
-        df_tmp = modeling_results[modeling_results["country"] == country]
-        topic_probs_by_country_binded.append(df_tmp.iloc[:, -num_topics:].values.flatten())
-        countries_added.append(country)
-    res = pd.DataFrame(np.vstack(topic_probs_by_country_binded), index=countries_added)
-    res.index.name = "country"
+def topic_probs_by_column_binded(
+    modeling_results: pd.DataFrame, num_topics: int, column: str = "country"
+) -> pd.DataFrame:
+    result = []
+    column_vals_added = []
+    column_vals = modeling_results.country.unique()
+    rows_by_column = modeling_results.groupby(column).count()[0].max()
+    for column_val in column_vals:
+        df_tmp = modeling_results[modeling_results[column] == column_val]
+        if df_tmp.shape[0] != rows_by_column:
+            warnings.warn(f"{column} - {column_val} has missing rows!")
+            continue
+        result.append(df_tmp.iloc[:, -num_topics:].values.flatten())
+        column_vals_added.append(column_val)
+    res = pd.DataFrame(np.vstack(result), index=column_vals_added)
+    res.index.name = column
     return res
 
 
 def tsne_dim_reduction(
-    result_df: pd.DataFrame, num_topics: int, random_state: int = 42, perplexity: int = 40
+    result_df: pd.DataFrame,
+    num_topics: int,
+    random_state: int = 42,
+    perplexity: int = 40,
+    n_iter: int = 1000,
+    init: str = "pca",
+    learning_rate: Union[str, float] = "auto",
 ) -> pd.DataFrame:
     tsne_result_df = result_df.copy()
     tsne = TSNE(
         n_components=2,
         verbose=1,
         perplexity=perplexity,
-        n_iter=1000,
-        init="pca",
-        learning_rate="auto",
+        n_iter=n_iter,
+        init=init,
+        learning_rate=learning_rate,
         random_state=random_state,
     )
     tsne_raw_result = tsne.fit_transform(result_df.iloc[:, -num_topics:])
