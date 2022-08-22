@@ -12,7 +12,7 @@ def load_df_data(df_file_name: str, index_col=False) -> pd.DataFrame:
     return pd.read_csv(df_file_name, index_col=index_col)
 
 
-section_topics_paths = glob("app/data/clustering_files/*.csv")
+section_topics_paths = glob("app/data/topic_probs/*.csv")
 sections = []
 for ix, section_topic_path in enumerate(section_topics_paths):
     sections.append(re.search("([A-Z]|[a-z]|_)+_probs.csv", section_topic_path).group()[:-10])
@@ -21,7 +21,7 @@ for ix, section_topic_path in enumerate(section_topics_paths):
 st.title("Clusters visualization")
 
 selected_section = st.selectbox("Select section", sections, index=0)
-selected_section_path = "app/data/clustering_files/" + selected_section.replace(" ", "_") + "_probs.csv"
+selected_section_path = "app/data/topic_probs/" + selected_section.replace(" ", "_") + "_probs.csv"
 
 topics_load = load_df_data(selected_section_path)
 topics = deepcopy(topics_load)
