@@ -32,7 +32,7 @@ def find_best_model(
 
 
 def find_best_topics_num(cvs: List[float], topic_numbers_range: Tuple[int, int] = (2, 11)) -> int:
-    return topic_numbers_range[0] + cvs.index(max(cvs))
+    return topic_numbers_range[0] + cvs.index(max(cvs)) if len(cvs) > 0 else topic_numbers_range[0]
 
 
 def find_best_alpha() -> int:

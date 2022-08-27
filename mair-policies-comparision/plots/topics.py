@@ -37,6 +37,7 @@ def plot_topics(
     ylim_weight: Optional[int] = None,
     ylim_count: Optional[int] = None,
     topics_names: Optional[List[str]] = None,
+    save_path: Optional[str] = None,
 ):
     df = _topics_df(model, docs, num_words)
     fig, axes = plt.subplots(x, y, figsize=figsize, sharey=False)
@@ -78,10 +79,17 @@ def plot_topics(
         ax_twin.grid(False)
     fig.suptitle(title, fontsize=16)
     fig.tight_layout()
+    if save_path is not None:
+        fig.savefig(save_path)
     return fig
 
 
-def plot_similarities(similarities: np.ndarray, topic_probs: pd.DataFrame, linkage: np.ndarray):
+def plot_similarities(
+    similarities: np.ndarray,
+    topic_probs: pd.DataFrame,
+    linkage: np.ndarray,
+    save_path: Optional[str] = None,
+):
     plt.figure(figsize=(12, 8))
     sns.clustermap(
         1 - similarities,
@@ -90,10 +98,16 @@ def plot_similarities(similarities: np.ndarray, topic_probs: pd.DataFrame, linka
         row_linkage=linkage,
         col_linkage=linkage,
     )
+    if save_path is not None:
+        plt.savefig(save_path)
     plt.show()
 
 
-def plot_hierarchical_clustering(distance_matrix: pd.DataFrame, linkage: np.ndarray):
+def plot_hierarchical_clustering(
+    distance_matrix: pd.DataFrame,
+    linkage: np.ndarray,
+    save_path: Optional[str] = None,
+):
     plt.figure(figsize=(12, 8))
     sns.clustermap(
         distance_matrix,
@@ -102,10 +116,17 @@ def plot_hierarchical_clustering(distance_matrix: pd.DataFrame, linkage: np.ndar
         row_linkage=linkage,
         col_linkage=linkage,
     )
+    if save_path is not None:
+        plt.savefig(save_path)
     plt.show()
 
 
-def plot_tsne(tsne_result_df: pd.DataFrame, hue: np.ndarray, palette: str = "pastel"):
+def plot_tsne(
+    tsne_result_df: pd.DataFrame,
+    hue: np.ndarray,
+    palette: str = "pastel",
+    save_path: Optional[str] = None,
+):
     plt.figure(figsize=(12, 10))
     fig = sns.scatterplot(
         x="c1", y="c2", data=tsne_result_df, legend=False, hue=hue, palette=palette
@@ -120,4 +141,6 @@ def plot_tsne(tsne_result_df: pd.DataFrame, hue: np.ndarray, palette: str = "pas
             color="black",
             weight="light",
         )
+    if save_path is not None:
+        plt.savefig(save_path)
     plt.show()
