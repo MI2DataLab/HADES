@@ -5,3 +5,5 @@ from utils.clustering import get_hdbscan_clusters
 from utils.plots import plot_clusters
 from utils.plots import plot_topic_distances
 from utils.plots import plot_topic_distribution
+from utils.plots import plot_topic_distribution_radar
+from utils.plots import plot_topic_distribution_violinplot

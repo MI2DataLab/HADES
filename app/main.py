@@ -1,5 +1,6 @@
 from glob import glob
 import pandas as pd
+import numpy as np
 import re
 import streamlit as st
 from streamlit_plotly_events import plotly_events
@@ -30,11 +31,18 @@ clusterings = ["Hierarchical", "K-Means", "HDBSCAN"]
 
 col_cluster, col_params = st.columns(2)
 with col_cluster:
-    selected_clustering = st.selectbox("Select clustering:", clusterings, index = 0)
+    selected_clustering = st.selectbox("Select clustering:", clusterings, index=0)
 with col_params:
     if selected_clustering == "Hierarchical":
-        t = st.number_input(f"Select t", min_value=0.0, value=1.0, step=1e-5, format="%.5f")
         linkage = utils.calculate_linkage_matrix(topics.iloc[:, 1:-2])
+        t = st.slider(
+            f"Select t",
+            min_value=0.0,
+            value=float(np.mean(linkage[:, 2])),
+            max_value=float(np.max(linkage[:, 2])),
+            step=1e-5,
+            format="%.5f",
+        )
         labels = utils.get_hierarchical_clusters(linkage, t)
     elif selected_clustering == "K-Means":
         n_clusters = st.number_input(f"Select n_clusters", min_value=2, value=2)
@@ -42,18 +50,29 @@ with col_params:
     elif selected_clustering == "HDBSCAN":
         min_cluster_size = st.number_input(f"Select min_cluster_size", min_value=1, value=5)
         min_samples = st.number_input(f"Select min_samples", min_value=1, value=1)
-        cluster_selection_epsilon = st.number_input(f"Select cluster_selection_epsilon", min_value=0.0, value=0.0, step=1e-5, format="%.5f")
-        labels = utils.get_hdbscan_clusters(topics.iloc[:, 1:-2], min_cluster_size, min_samples, cluster_selection_epsilon)
+        cluster_selection_epsilon = st.number_input(
+            f"Select cluster_selection_epsilon", min_value=0.0, value=0.0, step=1e-5, format="%.5f"
+        )
+        labels = utils.get_hdbscan_clusters(
+            topics.iloc[:, 1:-2], min_cluster_size, min_samples, cluster_selection_epsilon
+        )
 
-topics["label"] = labels.astype('int64')
+topics["label"] = labels.astype("str")
 
 fig = utils.plot_clusters(topics)
 selected_point = plotly_events(fig)
 if selected_point != []:
-    selected_country = topics["country"].loc[(topics["c1"] == selected_point[0]['x']) & (topics["c2"] == selected_point[0]['y'])].values[0]
+    selected_country = (
+        topics["country"]
+        .loc[(topics["c1"] == selected_point[0]["x"]) & (topics["c2"] == selected_point[0]["y"])]
+        .values[0]
+    )
     st.subheader(f"Country details: {selected_country}")
-    st.write("Topic distances:")
-    print(topics, selected_country)
+    st.write("Topic distibution: ")
+    st.plotly_chart(utils.plot_topic_distribution_radar(topics, selected_country))
+    st.write("Topic distribution in comparison with other")
+    st.plotly_chart(utils.plot_topic_distribution_violinplot(topics, selected_country))
+    st.write("Topic distances by clusters:")
     st.plotly_chart(utils.plot_topic_distances(topics, selected_country))
-    st.write("Topic distribution: ")
+    st.write("Topic distribution in comparison by clusters: ")
     st.pyplot(utils.plot_topic_distribution(topics, selected_country))
