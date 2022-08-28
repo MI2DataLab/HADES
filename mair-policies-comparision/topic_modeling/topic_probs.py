@@ -87,7 +87,7 @@ def topic_probs_by_column_binded(
 ) -> pd.DataFrame:
     result = []
     column_vals_added = []
-    column_vals = modeling_results.country.unique()
+    column_vals = modeling_results[column].unique()
     rows_by_column = modeling_results.groupby(column).count()[0].max()
     for column_val in column_vals:
         df_tmp = modeling_results[modeling_results[column] == column_val]
