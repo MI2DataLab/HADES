@@ -1,4 +1,3 @@
-from collections import Counter
 from typing import List, Optional, Tuple
 import numpy as np
 
@@ -9,21 +8,13 @@ from gensim.corpora.dictionary import Dictionary
 from gensim.models import LdaModel
 from matplotlib import colors
 from matplotlib import pyplot as plt
+from topic_modeling.utils import _topics_df
 
 pyLDAvis.enable_notebook()
 
 
 def interactive_exploration(lda_model: LdaModel, encoded_docs: pd.Series, dictionary: Dictionary):
     return pyLDAvis.gensim_models.prepare(lda_model, encoded_docs, dictionary=dictionary)
-
-
-def _topics_df(model: LdaModel, docs: pd.Series, num_words: int = 10) -> pd.DataFrame:
-    topics = model.show_topics(formatted=False, num_words=num_words)
-    counter = Counter(docs.sum())
-    out = [[word, i, weight, counter[word]] for i, topic in topics for word, weight in topic]
-    df = pd.DataFrame(out, columns=["word", "topic_id", "importance", "word_count"])
-    df = df.sort_values(by=["importance"], ascending=False)
-    return df
 
 
 def plot_topics(

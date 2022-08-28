@@ -1,10 +1,12 @@
 from typing import Dict, List, Optional, Tuple, Union
 
+from collections import Counter
 import pandas as pd
 from gensim.corpora.dictionary import Dictionary
 from gensim.models import CoherenceModel
 from gensim.models.ldamulticore import LdaMulticore
 from tqdm import tqdm
+from gensim.models import LdaModel
 
 
 def check_coherence_for_topics_num(
@@ -76,3 +78,12 @@ def get_coherences(
         CoherenceModel(model, texts=texts, dictionary=dictionary).get_coherence()
         for model in tqdm(models)
     ]
+
+
+def _topics_df(model: LdaModel, docs: pd.Series, num_words: int = 10) -> pd.DataFrame:
+    topics = model.show_topics(formatted=False, num_words=num_words)
+    counter = Counter(docs.sum())
+    out = [[word, i, weight, counter[word]] for i, topic in topics for word, weight in topic]
+    df = pd.DataFrame(out, columns=["word", "topic_id", "importance", "word_count"])
+    df = df.sort_values(by=["importance"], ascending=False)
+    return df
