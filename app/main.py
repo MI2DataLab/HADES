@@ -16,7 +16,7 @@ def load_df_data(df_file_name: str, index_col=False) -> pd.DataFrame:
 section_topics_paths = glob("app/data/topic_probs/*.csv")
 sections = []
 for ix, section_topic_path in enumerate(section_topics_paths):
-    sections.append(re.search("([A-Z]|[a-z]|_)+_probs.csv", section_topic_path).group()[:-10])
+    sections.append(re.search("([A-Z]|[a-z]|_|[0-9]|&)+_probs.csv", section_topic_path).group()[:-10])
     sections[ix] = sections[ix].replace("_", " ")
 
 st.title("Clusters visualization")

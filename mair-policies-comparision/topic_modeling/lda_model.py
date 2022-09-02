@@ -13,9 +13,9 @@ def find_best_model(
     cvs: List[float],
     topic_numbers_range: Tuple[int, int] = (2, 11),
     random_state: int = 42,
+    alpha = 100
 ) -> LdaModel:
     topics_num = find_best_topics_num(cvs, topic_numbers_range)
-    alpha = find_best_alpha()
     lda_model = LdaModel(
         encoded_docs,
         num_topics=topics_num,
@@ -33,7 +33,3 @@ def find_best_model(
 
 def find_best_topics_num(cvs: List[float], topic_numbers_range: Tuple[int, int] = (2, 11)) -> int:
     return topic_numbers_range[0] + cvs.index(max(cvs)) if len(cvs) > 0 else topic_numbers_range[0]
-
-
-def find_best_alpha() -> int:
-    return 100
