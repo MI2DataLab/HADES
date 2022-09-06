@@ -4,6 +4,7 @@ import plotly.express as px
 import matplotlib.pyplot as plt
 import plotly.graph_objects as go
 import pycountry
+from matplotlib import colors
 
 # df columns: country, [topics], c1, c2, label
 def plot_clusters(
@@ -19,10 +20,10 @@ def plot_clusters(
             lambda country: pycountry.countries.search_fuzzy(country.split("_")[-1])[0].alpha_2
         )
 
-    minDim = np.mean(np.abs(df[["c1", "c2"]].max() - df[["c1", "c2"]].min()))
+    minDim = np.mean(np.abs(df[[x, y]].max() - df[[x, y]].min()))
     maxi = 0.07 * minDim
 
-    colnames = df.columns[:-3].to_list()
+    colnames = df.columns[:-5].to_list()
 
     fig = px.scatter(
         df,
@@ -53,8 +54,8 @@ def plot_clusters(
                     yref="y",
                     xanchor="center",
                     yanchor="middle",
-                    x=row["c1"],
-                    y=row["c2"],
+                    x=row[x],
+                    y=row[y],
                     sizex=maxi,
                     sizey=maxi,
                     sizing="contain",
@@ -68,7 +69,7 @@ def plot_clusters(
 
 
 def plot_topic_distances(df, selected_text, text="country", label="label"):
-    topics_number = len(df.columns) - 4
+    topics_number = len(df.columns) - 5
     plot_labels = np.arange(topics_number)
     in_cluster = []
     out_cluster = []
@@ -117,7 +118,7 @@ def plot_topic_distances(df, selected_text, text="country", label="label"):
 
 
 def plot_topic_distribution(df, selected_text, text="country", label="label"):
-    topics_number = len(df.columns) - 4
+    topics_number = len(df.columns) - 5
     fig, axes = plt.subplots(topics_number, 1, figsize=(15, 1.5 * topics_number))
     plt.subplots_adjust(hspace=0.6)
     fig.suptitle(f"Topics distribution for {selected_text}")
@@ -161,16 +162,19 @@ def plot_topic_distribution(df, selected_text, text="country", label="label"):
     return fig
 
 
-def plot_topic_distribution_radar(df, selected_text, text="country"):
-    r = df.loc[df[text] == selected_text].iloc[:, 1:-3].values[0]
-    plot_data = pd.DataFrame(dict(r=r, theta=df.columns[1:-3]))
+def plot_topic_distribution_radar(df, selected_text, ind_from=1, ind_to=-5, text="country"):
+    r = df.loc[df[text] == selected_text].iloc[:, ind_from:ind_to].values[0]
+    plot_data = pd.DataFrame(dict(r=r, theta=df.columns[ind_from:ind_to]))
     fig = px.line_polar(plot_data, r="r", theta="theta", line_close=True)
     fig.update_traces(fill="toself")
-    return go.Figure(fig)
+    fig.update_layout(
+        margin=dict(l=20, r=20, t=20, b=20), height=300, paper_bgcolor="rgba(0,0,0,0)"
+    )
+    return fig
 
 
-def plot_topic_distribution_violinplot(df, selected_text, text="country"):
-    df_melted = df.melt(id_vars=text, value_vars=df.columns[1:-3])
+def plot_topic_distribution_violinplot(df, selected_text, ind_from=1, ind_to=-5, text="country"):
+    df_melted = df.melt(id_vars=text, value_vars=df.columns[ind_from:ind_to])
     selected_ids = np.array(df_melted[df_melted[text] == selected_text].index)
     fig = go.Violin(
         x=df_melted["variable"],
@@ -185,4 +189,46 @@ def plot_topic_distribution_violinplot(df, selected_text, text="country"):
         selected={"marker_color": "#371ea3"},
         unselected={"marker_opacity": 0.75},
     )
-    return go.Figure(fig)
+    fig = go.Figure(fig)
+    fig.update_layout(
+        margin=dict(l=20, r=20, t=20, b=20), height=300, paper_bgcolor="rgba(0,0,0,0)"
+    )
+    return fig
+
+
+def plot_topics(topic_keywords: pd.DataFrame, topic_ind: int, topic_name: str, col: str):
+    fig, ax1 = plt.subplots()
+    ax1.bar(
+        x="word",
+        height="word_count",
+        data=topic_keywords.loc[topic_keywords.topic_id == topic_ind, :],
+        color=col,
+        width=0.5,
+        alpha=0.3,
+        label="Word Count",
+    )
+    ax_twin = ax1.twinx()
+    ax_twin.bar(
+        x="word",
+        height="importance",
+        data=topic_keywords.loc[topic_keywords.topic_id == topic_ind, :],
+        color=col,
+        width=0.2,
+        label="Word Weight",
+    )
+    ax1.set_ylabel("Word Count", color=col)
+    ax_twin.set_ylabel("Word Weight", color=col)
+
+    ax1.set_title("Topic: " + topic_name, color=col, fontsize=12)
+    ax1.set_xticklabels(
+        topic_keywords.loc[topic_keywords.topic_id == topic_ind, "word"],
+        rotation=30,
+        horizontalalignment="right",
+        size=8,
+    )
+    ax1.legend(loc="upper right")
+    ax_twin.legend(loc="lower right")
+    ax1.grid(False)
+    ax_twin.grid(False)
+    fig.tight_layout()
+    return fig
