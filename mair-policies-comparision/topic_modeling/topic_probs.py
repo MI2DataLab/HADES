@@ -7,7 +7,6 @@ import scipy.cluster.hierarchy as hc
 import scipy.spatial as sp
 from gensim.corpora.dictionary import Dictionary
 from gensim.models import LdaModel
-from sklearn.manifold import TSNE
 
 
 def get_topic_probs(
@@ -99,31 +98,6 @@ def topic_probs_by_column_binded(
     res = pd.DataFrame(np.vstack(result), index=column_vals_added)
     res.index.name = column
     return res
-
-
-def tsne_dim_reduction(
-    result_df: pd.DataFrame,
-    num_topics: int,
-    random_state: int = 42,
-    perplexity: int = 40,
-    n_iter: int = 1000,
-    init: str = "pca",
-    learning_rate: Union[str, float] = "auto",
-) -> pd.DataFrame:
-    tsne_result_df = result_df.copy()
-    tsne = TSNE(
-        n_components=2,
-        verbose=1,
-        perplexity=perplexity,
-        n_iter=n_iter,
-        init=init,
-        learning_rate=learning_rate,
-        random_state=random_state,
-    )
-    tsne_raw_result = tsne.fit_transform(result_df.iloc[:, -num_topics:])
-    tsne_result_df["c1"] = tsne_raw_result[:, 0]
-    tsne_result_df["c2"] = tsne_raw_result[:, 1]
-    return tsne_result_df
 
 
 def get_hierarchical_clusters(linkage: np.ndarray, t: float = 1.0):
