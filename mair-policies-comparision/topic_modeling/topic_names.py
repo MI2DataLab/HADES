@@ -4,7 +4,7 @@ import os
 import pandas as pd
 import numpy as np
 from gensim.models import LdaModel
-from utils import _topics_df
+from .utils import _topics_df
 
 
 def name_topics_manually(
@@ -25,7 +25,7 @@ def name_topics_automatically_gpt3(
     model: LdaModel,
     docs: pd.Series,
     num_topics: int,
-    num_keywords: int = 10,
+    num_keywords: int = 15,
     gpt3_model: str = "text-davinci-002",
     temperature: int = 0.5,
 ) -> pd.DataFrame:
@@ -35,7 +35,8 @@ def name_topics_automatically_gpt3(
     topic_colnames = colnames[-num_topics:]
     for i, colname in enumerate(topic_colnames):
         keywords = topics_keywords[topics_keywords["topic_id"] == colname].word.to_list()
-        prompt = _generate_prompt(keywords)
+        weights = topics_keywords[topics_keywords["topic_id"] == colname].importance.to_list()
+        prompt = _generate_prompt(keywords, weights)
         title = _generate_title(prompt, gpt3_model, temperature)
         topic_colnames[i] = title
     colnames[-num_topics:] = topic_colnames
@@ -43,12 +44,14 @@ def name_topics_automatically_gpt3(
     return topic_df
 
 
-def _generate_prompt(keywords: list) -> str:
-    print(keywords)
-    return f"""Suggest short (maximum three words) name for a topic based on given keywords:
-    {', '.join(keywords)}"""
+def _generate_prompt(keywords: list, weights: list) -> str:
+    keywords_weights = [word + ": " + str(weight) for word, weight in zip(keywords, weights)]
+    return (
+        "Suggest short (maximum three words) name for a topic based on given keywords and their importance: "
+        + ", ".join(keywords_weights)
+    )
 
 
-def _generate_title(prompt: str, model: str, temperature: int) -> str:
-    response = openai.Completion.create(model=model, prompt=prompt, temperature=temperature)
+def _generate_title(prompt: str, gpt3_model: str, temperature: int) -> str:
+    response = openai.Completion.create(model=gpt3_model, prompt=prompt, temperature=temperature)
     return response.choices[0].text.split("\n")[-1]
