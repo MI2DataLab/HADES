@@ -25,6 +25,7 @@ pyLDAvis = "^3.3.1"
 hdbscan = "^0.8.28"
 pycountry = "^22.3.5"
 statsmodels = "^0.13.2"
+openai = "^0.23.0"
 
 [tool.poetry.dev-dependencies]
 streamlit = "^1.11.1"
