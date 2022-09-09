@@ -1,5 +1,5 @@
-from typing import Dict, List, Tuple, Union
 import warnings
+from typing import Callable, Dict, List, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -32,18 +32,22 @@ def get_topic_probs(
 def calculate_linkage_matrix(
     topic_probs: pd.DataFrame, method: str = "average", metric: str = "cosine"
 ) -> np.ndarray:
-    return hc.linkage(topic_probs, method=method, metric=metric)
+    return hc.linkage(topic_probs, method=method, metric=_get_metric(metric))
 
 
 def calculate_distance_matrix(topic_probs: pd.DataFrame, metric: str = "hd") -> pd.DataFrame:
+    distances = sp.distance.squareform(sp.distance.pdist(topic_probs.values, metric=_get_metric(metric)))
+    return pd.DataFrame(distances, index=topic_probs.index, columns=topic_probs.index)
+
+
+def _get_metric(metric: str) -> Union[str, Callable]:
     if metric == "ir":
         metric = lambda p, q: np.sum(p * np.log(2 * p / (p + q))) + np.sum(
             q * np.log(2 * q / (p + q))
         )
     if metric == "hd":
         metric = lambda p, q: np.sqrt(np.sum((np.sqrt(p) - np.sqrt(q)) ** 2)) / np.sqrt(2)
-    distances = sp.distance.squareform(sp.distance.pdist(topic_probs.values, metric=metric))
-    return pd.DataFrame(distances, index=topic_probs.index, columns=topic_probs.index)
+    return metric
 
 
 def get_similarities(topic_probs: pd.DataFrame) -> np.ndarray:
