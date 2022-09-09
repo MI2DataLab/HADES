@@ -6,6 +6,8 @@ import streamlit as st
 from copy import deepcopy
 import utils
 
+DIR = "app/data/"
+
 default_config = {
     "displaylogo": False,
     "staticPlot": False,
@@ -40,7 +42,7 @@ def load_df_keywords_data(df_file_name: str, index_col=False) -> pd.DataFrame:
     return pd.read_csv(df_file_name, index_col=index_col)
 
 
-section_topics_paths = glob("app/data/*probs.csv")
+section_topics_paths = glob(DIR + "*probs.csv")
 sections = [
     "Decarbonisation",
     "Energy efficiency",
@@ -72,7 +74,7 @@ with mapping:
     )
 
 selected_section_path = (
-    "app/data/" + str(selected_version) + "_" + selected_section.replace(" ", "_") + "_probs.csv"
+    DIR + str(selected_version) + "_" + selected_section.replace(" ", "_") + "_probs.csv"
 )
 
 topics_load = load_df_data(selected_section_path)
@@ -90,7 +92,7 @@ else:
     topic_names = topics.columns[1:-4][:n_topics]
 
 clusterings = ["Hierarchical", "K-Means", "HDBSCAN"]
-col_cluster, col_params = st.columns(2)
+col_cluster, col_metric, col_params = st.columns(3)
 with col_cluster:
     selected_clustering = st.selectbox("Select clustering:", clusterings, index=0)
 with col_params:
@@ -112,7 +114,11 @@ with col_params:
         min_cluster_size = st.number_input(f"Select min_cluster_size", min_value=1, value=5)
         min_samples = st.number_input(f"Select min_samples", min_value=1, value=1)
         cluster_selection_epsilon = st.number_input(
-            f"Select cluster_selection_epsilon", min_value=0.0, value=0.0, step=1e-5, format="%.5f"
+            f"Select cluster_selection_epsilon",
+            min_value=0.0,
+            value=0.0,
+            step=1e-5,
+            format="%.5f",
         )
         labels = utils.get_hdbscan_clusters(
             topics.iloc[:, 1:-4].values / 3,
