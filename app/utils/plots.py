@@ -1,3 +1,4 @@
+from turtle import bgcolor
 import numpy as np
 import pandas as pd
 import plotly.express as px
@@ -162,11 +163,54 @@ def plot_topic_distribution(df, selected_text, text="country", label="label"):
     return fig
 
 
-def plot_topic_distribution_radar(df, selected_text, ind_from=1, ind_to=-5, text="country"):
-    r = df.loc[df[text] == selected_text].iloc[:, ind_from:ind_to].values[0]
-    plot_data = pd.DataFrame(dict(r=r, theta=df.columns[ind_from:ind_to]))
-    fig = px.line_polar(plot_data, r="r", theta="theta", line_close=True)
-    fig.update_traces(fill="toself")
+def plot_topic_distribution_radar(df, selected_text, text="country", n_topics=None, multiple=False):
+    fig = go.Figure()
+    topic_names = [top.split(" ", 1)[1] for top in df.columns[1 : (n_topics + 1)]]
+    if not multiple:
+        r = df.loc[df[text] == selected_text].iloc[:, 1 : (n_topics + 1)].values[0]
+        fig.add_trace(go.Scatterpolar(r=r, theta=topic_names, fill="toself", name="Whole section"))
+    else:
+        r1 = df.loc[df[text] == selected_text].iloc[:, 1 : (n_topics + 1)].values[0]
+        r1 = np.append(r1, r1[0])
+        r2 = (
+            df.loc[df[text] == selected_text].iloc[:, (n_topics + 1) : (2 * n_topics + 1)].values[0]
+        )
+        r2 = np.append(r2, r2[0])
+        r3 = (
+            df.loc[df[text] == selected_text]
+            .iloc[:, (2 * n_topics + 1) : (3 * n_topics + 1)]
+            .values[0]
+        )
+        r3 = np.append(r3, r3[0])
+
+        fig.add_trace(
+            go.Scatterpolar(
+                r=r1,
+                theta=topic_names + [topic_names[0]],
+                fill="toself",
+                name="National Objectives and Targets",
+            )
+        )
+        fig.add_trace(
+            go.Scatterpolar(
+                r=r2,
+                theta=topic_names + [topic_names[0]],
+                fill="toself",
+                name="Policies and Measures",
+            )
+        )
+        fig.add_trace(
+            go.Scatterpolar(
+                r=r3,
+                theta=topic_names + [topic_names[0]],
+                fill="toself",
+                name="Current Situation and Reference Projections",
+            )
+        )
+
+    fig.update_layout(
+        polar=dict(radialaxis=dict(visible=True), bgcolor="rgb(237,237,237)"), showlegend=False
+    )
     fig.update_layout(
         margin=dict(l=20, r=20, t=20, b=20), height=300, paper_bgcolor="rgba(0,0,0,0)"
     )
@@ -220,6 +264,7 @@ def plot_topics(topic_keywords: pd.DataFrame, topic_ind: int, topic_name: str, c
     ax_twin.set_ylabel("Word Weight", color=col)
 
     ax1.set_title("Topic: " + topic_name, color=col, fontsize=12)
+    ax1.xaxis.set_ticks(np.arange(30))
     ax1.set_xticklabels(
         topic_keywords.loc[topic_keywords.topic_id == topic_ind, "word"],
         rotation=30,
