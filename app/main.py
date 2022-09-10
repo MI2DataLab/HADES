@@ -193,13 +193,13 @@ with tabs[0]:
             config=default_config,
         )
     else:
-        st.subheader("National Objectives and Targets")
         st.plotly_chart(
             utils.plot_topic_distribution_radar(
-                topics, selected_country, ind_from=1, ind_to=n_topics + 1
+                topics, selected_country, multiple=True, n_topics=n_topics
             ),
             config=default_config,
         )
+        st.subheader("National Objectives and Targets")
         st.plotly_chart(
             utils.plot_topic_distribution_violinplot(
                 topics, selected_country, ind_from=1, ind_to=n_topics + 1
@@ -208,24 +208,12 @@ with tabs[0]:
         )
         st.subheader("Policies and Measures")
         st.plotly_chart(
-            utils.plot_topic_distribution_radar(
-                topics, selected_country, ind_from=n_topics + 1, ind_to=2 * n_topics + 1
-            ),
-            config=default_config,
-        )
-        st.plotly_chart(
             utils.plot_topic_distribution_violinplot(
                 topics, selected_country, ind_from=n_topics + 1, ind_to=2 * n_topics + 1
             ),
             config=default_config,
         )
         st.subheader("Current Situation and Reference Projections")
-        st.plotly_chart(
-            utils.plot_topic_distribution_radar(
-                topics, selected_country, ind_from=2 * n_topics + 1, ind_to=3 * n_topics + 1
-            ),
-            config=default_config,
-        )
         st.plotly_chart(
             utils.plot_topic_distribution_violinplot(
                 topics, selected_country, ind_from=2 * n_topics + 1, ind_to=3 * n_topics + 1
@@ -234,6 +222,10 @@ with tabs[0]:
         )
 
 with tabs[1]:
+    st.header("Topic analysis")
+    with open(selected_section_path.replace("probs.csv", "vis.txt"), "r") as file:
+        html_string = file.read()
+    st.components.v1.html(html_string, width=1300, height=800)
     st.header(f"Topic keywords")
     colors_list = [
         "#8bdcbe",
