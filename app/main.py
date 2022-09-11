@@ -31,7 +31,7 @@ default_config = {
     ],
 }
 
-section_topics_paths = glob(DIR + "*probs.csv")
+section_topics_paths = glob(DIR + "necps/" + "*probs.csv")
 sections = [
     "Decarbonisation",
     "Energy efficiency",
@@ -70,7 +70,7 @@ with st.sidebar:
         )
 
     selected_section_path = (
-        DIR + str(selected_version) + "_" + selected_section.replace(" ", "_") + "_probs.csv"
+        DIR + "necps/" + str(selected_version) + "_" + selected_section.replace(" ", "_") + "_probs.csv"
     )
     topics_load = load_df_data(selected_section_path)
     keywords_load = load_df_keywords_data(selected_section_path.replace("probs", "topic_words"))
@@ -175,7 +175,7 @@ with sc2:
             "{:.6f}".format(round(pval, 6)),
         )
 
-tabs = st.tabs(["Country details", "Topic details"])
+tabs = st.tabs(["Country details", "Topic details", "Additional data comparision"])
 with tabs[0]:
     selected_country = st.selectbox("Select country", topics.country.unique(), index=0)
     st.header(f"Country details: {selected_country}")
@@ -238,3 +238,43 @@ with tabs[1]:
     ] * n_topics
     for i in range(n_topics):
         st.pyplot(utils.plot_topics(keywords, i, topic_names[i], colors_list[i]))
+        
+with tabs[2]:
+    topics_additional = topics.copy().drop(["c1", "c2", "u1", "u2"], axis=1)
+    topics_additional["country"] = topics_additional["country"].apply(lambda x: x.lower())
+    selected_columns = st.multiselect(
+        "Select topic modelling columns",
+        list(topics_additional.columns[1:-1]),
+        default=list(topics_additional.columns[1:-1])[:3],
+    )
+    df_comissions_individual_assesment = load_df_data(DIR + "additional/comissions_individual_assesment.csv", index_col=0)
+    df_planning_for_net_zero_report = load_df_data(DIR + "additional/planning_for_net_zero_report.csv", index_col=0)
+    selected_data = st.selectbox(
+        "Select additional data",
+        ["Comissions Individual Assesment", "Planning for net zero report"],
+        index=0,
+    )
+    df_selected = (
+        df_comissions_individual_assesment.copy()
+        if selected_data == "Comissions Individual Assesment"
+        else df_planning_for_net_zero_report.copy()
+    )
+    df_selected["country"] = df_selected["country"].apply(lambda x: x.lower())
+    default = (
+        [colname for colname in df_selected.columns if "total" in colname.lower()]
+        if selected_data == "Planning for net zero report"
+        else list(df_selected.columns[1:])[:4]
+    )
+    selected_columns_additional = st.multiselect(
+        "Select additional data columns",
+        list(df_selected.columns[1:]),
+        default=default,
+    )
+    merged_df = topics_additional[selected_columns + ["country"]].merge(
+        df_selected[selected_columns_additional + ["country"]], how="left", on="country"
+    )
+    st.header("Correlation heatmap")
+    st.write(
+        utils.plot_correlation_heatmap(merged_df),
+        config=default_config,
+    )
