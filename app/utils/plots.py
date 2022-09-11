@@ -5,6 +5,7 @@ import plotly.express as px
 import matplotlib.pyplot as plt
 import plotly.graph_objects as go
 import pycountry
+import seaborn as sns
 from matplotlib import colors
 
 # df columns: country, [topics], c1, c2, label
@@ -276,4 +277,9 @@ def plot_topics(topic_keywords: pd.DataFrame, topic_ind: int, topic_name: str, c
     ax1.grid(False)
     ax_twin.grid(False)
     fig.tight_layout()
+    return fig
+
+def plot_correlation_heatmap(df: pd.DataFrame):
+    fig, ax = plt.subplots()
+    sns.heatmap(df.corr(), ax=ax)
     return fig

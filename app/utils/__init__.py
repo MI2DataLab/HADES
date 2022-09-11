@@ -10,3 +10,4 @@ from utils.plots import plot_topic_distribution_radar
 from utils.plots import plot_topic_distribution_violinplot
 from utils.plots import plot_topics 
 from utils.stats import manova_significant_difference_pval
+from utils.plots import plot_correlation_heatmap
