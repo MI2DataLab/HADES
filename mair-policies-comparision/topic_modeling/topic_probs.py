@@ -30,12 +30,12 @@ def get_topic_probs(
 
 
 def calculate_linkage_matrix(
-    topic_probs: pd.DataFrame, method: str = "average", metric: str = "cosine"
+    topic_probs: pd.DataFrame, method: str = "average", metric: str = "ir"
 ) -> np.ndarray:
     return hc.linkage(topic_probs, method=method, metric=_get_metric(metric))
 
 
-def calculate_distance_matrix(topic_probs: pd.DataFrame, metric: str = "hd") -> pd.DataFrame:
+def calculate_distance_matrix(topic_probs: pd.DataFrame, metric: str = "ir") -> pd.DataFrame:
     distances = sp.distance.squareform(sp.distance.pdist(topic_probs.values, metric=_get_metric(metric)))
     return pd.DataFrame(distances, index=topic_probs.index, columns=topic_probs.index)
 
@@ -104,5 +104,5 @@ def topic_probs_by_column_binded(
     return res
 
 
-def get_hierarchical_clusters(linkage: np.ndarray, t: float = 1.0):
-    return hc.fcluster(linkage, t=t)
+def get_hierarchical_clusters(linkage: np.ndarray, t: float = 1.0, criterion: str = "distance"):
+    return hc.fcluster(linkage, t=t, criterion=criterion)
