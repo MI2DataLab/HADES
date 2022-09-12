@@ -245,7 +245,7 @@ with tabs[2]:
     selected_columns = st.multiselect(
         "Select topic modelling columns",
         list(topics_additional.columns[1:-1]),
-        default=list(topics_additional.columns[1:-1])[:3],
+        default = list(topics_additional.columns[1:-1])
     )
     df_comissions_individual_assesment = load_df_data(DIR + "additional/comissions_individual_assesment.csv", index_col=0)
     df_planning_for_net_zero_report = load_df_data(DIR + "additional/planning_for_net_zero_report.csv", index_col=0)
