@@ -66,7 +66,7 @@ with st.sidebar:
     version, mapping = st.columns(2)
     with version:
         selected_version = st.selectbox(
-            "Select version", versions, index=0, help="Choose version of topic modeling "
+            "Select version", versions, index=1, help="Choose version of topic modeling "
         )
 
     selected_section_path = (
@@ -225,7 +225,7 @@ with tabs[1]:
     st.header("Topic analysis")
     with open(selected_section_path.replace("probs.csv", "vis.txt"), "r") as file:
         html_string = file.read()
-    st.components.v1.html(html_string, width=1300, height=800)
+    st.components.v1.html(html_string, width=800, height=800, scrolling=True)
     st.header(f"Topic keywords")
     colors_list = [
         "#8bdcbe",
@@ -252,7 +252,7 @@ with tabs[2]:
     selected_data = st.selectbox(
         "Select additional data",
         ["Comissions Individual Assesment", "Planning for net zero report"],
-        index=0,
+        index=1,
     )
     df_selected = (
         df_comissions_individual_assesment.copy()
@@ -273,8 +273,16 @@ with tabs[2]:
     merged_df = topics_additional[selected_columns + ["country"]].merge(
         df_selected[selected_columns_additional + ["country"]], how="left", on="country"
     )
+    selected_method = st.selectbox(
+        "Select correlation method",
+        ["Pearson", "Kendall", "Spearman"],
+        index=0,
+    )
+    corr_df = merged_df.corr(method=selected_method.lower())
+    corr_df = corr_df.drop(selected_columns, axis=1)
+    corr_df = corr_df.drop(selected_columns_additional, axis=0)
     st.header("Correlation heatmap")
     st.write(
-        utils.plot_correlation_heatmap(merged_df),
+        utils.plot_correlation_heatmap(corr_df),
         config=default_config,
     )

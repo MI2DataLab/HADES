@@ -281,5 +281,5 @@ def plot_topics(topic_keywords: pd.DataFrame, topic_ind: int, topic_name: str, c
 
 def plot_correlation_heatmap(df: pd.DataFrame):
     fig, ax = plt.subplots()
-    sns.heatmap(df.corr(), ax=ax)
+    sns.heatmap(df, ax=ax, annot=True)
     return fig
