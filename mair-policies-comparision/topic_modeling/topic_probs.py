@@ -50,8 +50,8 @@ def _get_metric(metric: str) -> Union[str, Callable]:
     return metric
 
 
-def get_similarities(topic_probs: pd.DataFrame) -> np.ndarray:
-    return sp.distance.squareform(sp.distance.pdist(topic_probs.values, metric="cosine"))
+def get_similarities(topic_probs: pd.DataFrame, metric: str = "ir") -> np.ndarray:
+    return sp.distance.squareform(sp.distance.pdist(topic_probs.values, metric=_get_metric(metric)))
 
 
 def shift_similarity(

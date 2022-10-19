@@ -81,7 +81,7 @@ def plot_similarities(
     linkage: np.ndarray,
     save_path: Optional[str] = None,
 ):
-    plt.figure(figsize=(12, 8))
+    fig = plt.figure(figsize=(12, 8))
     sns.clustermap(
         1 - similarities,
         xticklabels=topic_probs.index,
@@ -90,8 +90,8 @@ def plot_similarities(
         col_linkage=linkage,
     )
     if save_path is not None:
-        plt.savefig(save_path)
-    plt.show()
+        fig.savefig(save_path)
+    return fig
 
 
 def plot_hierarchical_clustering(
