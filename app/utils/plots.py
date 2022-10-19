@@ -1,4 +1,3 @@
-from turtle import bgcolor
 import numpy as np
 import pandas as pd
 import plotly.express as px
@@ -8,14 +7,19 @@ import pycountry
 import seaborn as sns
 from matplotlib import colors
 
-# df columns: country, [topics], c1, c2, label
+
 def plot_clusters(
-    df,
+    df_probs,
+    df_mapping,
+    labels,
     x="c1",
     y="c2",
-    color="label",
     try_flags=True,
 ):
+    df_probs["country"] = df_probs["country"].astype(str)
+    df_mapping["country"] = df_mapping["country"].astype(str)
+    df = df_probs.merge(df_mapping, on="country")
+    df["label"] = labels
     iso_alpha2 = None
     if try_flags:
         iso_alpha2 = df["country"].apply(
@@ -25,13 +29,13 @@ def plot_clusters(
     minDim = np.mean(np.abs(df[[x, y]].max() - df[[x, y]].min()))
     maxi = 0.07 * minDim
 
-    colnames = df.columns[:-5].to_list()
+    colnames = df_probs.columns.to_list()
 
     fig = px.scatter(
         df,
         x=x,
         y=y,
-        color=color,
+        color="label",
         hover_data=colnames,
     )
 
@@ -158,59 +162,24 @@ def plot_topic_distribution(df, selected_text, text="country", label="label"):
         plt.Line2D([0], [0], color="r", lw=3),
     ]
     fig.legend(
-        legend_lines, ["selected country", "inside cluster", "outside cluster"], facecolor="#262730"
+        legend_lines,
+        ["selected country", "inside cluster", "outside cluster"],
+        facecolor="#262730",
     )
 
     return fig
 
 
-def plot_topic_distribution_radar(df, selected_text, text="country", n_topics=None, multiple=False):
+def plot_topic_distribution_radar(df, selected_text, text="country"):
     fig = go.Figure()
-    topic_names = [top.split(" ", 1)[1] for top in df.columns[1 : (n_topics + 1)]]
-    if not multiple:
-        r = df.loc[df[text] == selected_text].iloc[:, 1 : (n_topics + 1)].values[0]
-        fig.add_trace(go.Scatterpolar(r=r, theta=topic_names, fill="toself", name="Whole section"))
-    else:
-        r1 = df.loc[df[text] == selected_text].iloc[:, 1 : (n_topics + 1)].values[0]
-        r1 = np.append(r1, r1[0])
-        r2 = (
-            df.loc[df[text] == selected_text].iloc[:, (n_topics + 1) : (2 * n_topics + 1)].values[0]
-        )
-        r2 = np.append(r2, r2[0])
-        r3 = (
-            df.loc[df[text] == selected_text]
-            .iloc[:, (2 * n_topics + 1) : (3 * n_topics + 1)]
-            .values[0]
-        )
-        r3 = np.append(r3, r3[0])
+    topic_names = df.columns[1:]
 
-        fig.add_trace(
-            go.Scatterpolar(
-                r=r1,
-                theta=topic_names + [topic_names[0]],
-                fill="toself",
-                name="National Objectives and Targets",
-            )
-        )
-        fig.add_trace(
-            go.Scatterpolar(
-                r=r2,
-                theta=topic_names + [topic_names[0]],
-                fill="toself",
-                name="Policies and Measures",
-            )
-        )
-        fig.add_trace(
-            go.Scatterpolar(
-                r=r3,
-                theta=topic_names + [topic_names[0]],
-                fill="toself",
-                name="Current Situation and Reference Projections",
-            )
-        )
+    r = df.loc[df[text] == selected_text].iloc[:, 1:].values[0]
+    fig.add_trace(go.Scatterpolar(r=r, theta=topic_names, fill="toself", name="Whole section"))
 
     fig.update_layout(
-        polar=dict(radialaxis=dict(visible=True), bgcolor="rgb(237,237,237)"), showlegend=False
+        polar=dict(radialaxis=dict(visible=True), bgcolor="rgb(237,237,237)"),
+        showlegend=False,
     )
     fig.update_layout(
         margin=dict(l=20, r=20, t=20, b=20), height=300, paper_bgcolor="rgba(0,0,0,0)"
@@ -218,8 +187,8 @@ def plot_topic_distribution_radar(df, selected_text, text="country", n_topics=No
     return fig
 
 
-def plot_topic_distribution_violinplot(df, selected_text, ind_from=1, ind_to=-5, text="country"):
-    df_melted = df.melt(id_vars=text, value_vars=df.columns[ind_from:ind_to])
+def plot_topic_distribution_violinplot(df, selected_text, text="country"):
+    df_melted = df.melt(id_vars=text, value_vars=df.columns[1:])
     selected_ids = np.array(df_melted[df_melted[text] == selected_text].index)
     fig = go.Violin(
         x=df_melted["variable"],
@@ -233,6 +202,7 @@ def plot_topic_distribution_violinplot(df, selected_text, ind_from=1, ind_to=-5,
         selectedpoints=selected_ids,
         selected={"marker_color": "#371ea3"},
         unselected={"marker_opacity": 0.75},
+        hovertemplate="<b>%{text}</b>: %{y}<extra>%{x}</extra>",
     )
     fig = go.Figure(fig)
     fig.update_layout(
@@ -241,12 +211,18 @@ def plot_topic_distribution_violinplot(df, selected_text, ind_from=1, ind_to=-5,
     return fig
 
 
-def plot_topics(topic_keywords: pd.DataFrame, topic_ind: int, topic_name: str, col: str):
+def plot_topics(
+    topic_keywords: pd.DataFrame,
+    topic_ind: int,
+    topic_num: int,
+    topic_name: str,
+    col: str,
+):
     fig, ax1 = plt.subplots()
     ax1.bar(
         x="word",
         height="word_count",
-        data=topic_keywords.loc[topic_keywords.topic_id == topic_ind, :],
+        data=topic_keywords.loc[topic_keywords.topic_id == topic_num, :],
         color=col,
         width=0.5,
         alpha=0.3,
@@ -256,7 +232,7 @@ def plot_topics(topic_keywords: pd.DataFrame, topic_ind: int, topic_name: str, c
     ax_twin.bar(
         x="word",
         height="importance",
-        data=topic_keywords.loc[topic_keywords.topic_id == topic_ind, :],
+        data=topic_keywords.loc[topic_keywords.topic_id == topic_num, :],
         color=col,
         width=0.2,
         label="Word Weight",
@@ -264,10 +240,10 @@ def plot_topics(topic_keywords: pd.DataFrame, topic_ind: int, topic_name: str, c
     ax1.set_ylabel("Word Count", color=col)
     ax_twin.set_ylabel("Word Weight", color=col)
 
-    ax1.set_title("Topic: " + topic_name, color=col, fontsize=12)
+    ax1.set_title(f"Topic {topic_ind + 1}: " + topic_name, color=col, fontsize=12)
     ax1.xaxis.set_ticks(np.arange(30))
     ax1.set_xticklabels(
-        topic_keywords.loc[topic_keywords.topic_id == topic_ind, "word"],
+        topic_keywords.loc[topic_keywords.topic_id == topic_num, "word"],
         rotation=30,
         horizontalalignment="right",
         size=8,
@@ -278,6 +254,7 @@ def plot_topics(topic_keywords: pd.DataFrame, topic_ind: int, topic_name: str, c
     ax_twin.grid(False)
     fig.tight_layout()
     return fig
+
 
 def plot_correlation_heatmap(df: pd.DataFrame):
     fig, ax = plt.subplots()
