@@ -5,8 +5,12 @@ import re
 import streamlit as st
 from copy import deepcopy
 import utils
+import json
 
-DIR = "app/data/"
+APP_SETTINGS_FILENAME = "app_settings_social_policies.json"
+
+f = open(APP_SETTINGS_FILENAME)
+settings_dict = json.load(f)
 
 default_config = {
     "displaylogo": False,
@@ -30,19 +34,18 @@ default_config = {
         "hoverClosestCartesian",
     ],
 }
+sections = list(settings_dict["sections"].keys())
 
-section_topics_paths = glob(DIR + "necps/" + "*probs.csv")
-sections = [
-    "Decarbonisation",
-    "Energy efficiency",
-    "Energy security",
-    "Internal market",
-    "R&I and Competitiveness",
-    "Impact Assessment of Planned Policies and Measures",
-    "Overview and Process for Establishing the Plan",
-]
+# order_dict = {
+#     "Decarbonisation": [3, 1, 4, 2, 5],
+#     "Energy efficiency": [1, 3, 5, 4, 2],
+#     "Energy security": [2, 3, 1],
+#     "Internal market": [1, 2, 3],
+#     "R&I and Competitiveness": [1, 2, 3],
+#     "Impact Assessment of Planned Policies and Measures": [3, 4, 2, 1],
+#     "Overview and Process for Establishing the Plan": [2, 3, 1, 4],
+# }
 
-versions = [50, 100, 150, 200, 250]
 mappings = ["tSNE", "UMAP"]
 clusterings = ["Hierarchical", "K-Means", "HDBSCAN"]
 
@@ -55,54 +58,45 @@ def load_df_data(df_file_name: str, index_col=False) -> pd.DataFrame:
 
 
 @st.cache
+def load_df_mapping_data(df_file_name: str, index_col=False) -> pd.DataFrame:
+    return pd.read_csv(df_file_name, index_col=index_col)
+
+
+@st.cache
 def load_df_keywords_data(df_file_name: str, index_col=False) -> pd.DataFrame:
     return pd.read_csv(df_file_name, index_col=index_col)
 
 
-st.title("Topic Modelling for NECPs")
-
+st.title("Policy Comparison App")
 with st.sidebar:
     selected_section = st.selectbox("Select section", sections, index=0)
-    version, mapping = st.columns(2)
-    with version:
-        selected_version = st.selectbox(
-            "Select version", versions, index=1, help="Choose version of topic modeling "
-        )
-
-    selected_section_path = (
-        DIR + "necps/" + str(selected_version) + "_" + selected_section.replace(" ", "_") + "_probs.csv"
+    topics_load = load_df_data(settings_dict["sections"][selected_section]["probs"])
+    mapping_load = load_df_mapping_data(settings_dict["sections"][selected_section]["mapping"])
+    keywords_load = load_df_keywords_data(
+        settings_dict["sections"][selected_section]["topic_words"]
     )
-    topics_load = load_df_data(selected_section_path)
-    keywords_load = load_df_keywords_data(selected_section_path.replace("probs", "topic_words"))
     topics = deepcopy(topics_load)
+    mapping = deepcopy(mapping_load)
     keywords = deepcopy(keywords_load)
-    is_multidimensional = False
-    if selected_section in [
-        "Impact Assessment of Planned Policies and Measures",
-        "Overview and Process for Establishing the Plan",
-    ]:
-        n_topics = len(topics.columns[1:-4])
-        topic_names = topics.columns[1:-4]
-        topic_matrix = topics.iloc[:, 1:-4].values
-    else:
-        is_multidimensional = True
-        n_topics = int(len(topics.columns[1:-4]) / 3)
-        topic_names = topics.columns[1:-4][:n_topics]
-        topic_matrix = topics.iloc[:, 1:-4].values / 3
+    n_topics = len(topics.columns[1:])
+    topic_names = topics.columns[1:]
+    topic_matrix = topics.iloc[:, 1:].values
 
-    with mapping:
-        selected_mapping = st.selectbox(
-            "Select mapping",
-            mappings,
-            index=0,
-            help="Choose visualization method for representation of countries on 2D plot based on their agendas",
-        )
+    selected_mapping = st.selectbox(
+        "Select mapping",
+        mappings,
+        index=0,
+        help="Choose visualization method for representation of countries on 2D plot based on their agendas",
+    )
 
     selected_clustering = st.selectbox("Select clustering method", clusterings, index=0)
 
     if selected_clustering == "Hierarchical":
         distance_metric = st.selectbox(
-            "Select option", metric_choices.keys(), format_func=lambda x: metric_choices[x], index=0
+            "Select option",
+            metric_choices.keys(),
+            format_func=lambda x: metric_choices[x],
+            index=0,
         )
 
         linkage_method = st.selectbox(
@@ -121,15 +115,18 @@ with st.sidebar:
             step=1e-5,
             format="%.5f",
         )
-        labels = utils.get_hierarchical_clusters(linkage, t)
+        labels = utils.get_hierarchical_clusters(linkage, t).astype(str)
 
     elif selected_clustering == "K-Means":
         n_clusters = st.number_input(f"Select number of clusters", min_value=2, value=2)
-        labels = utils.get_kmeans_clusters(topic_matrix, n_clusters)
+        labels = utils.get_kmeans_clusters(topic_matrix, n_clusters).astype(str)
 
     elif selected_clustering == "HDBSCAN":
         distance_metric = st.selectbox(
-            "Select option", metric_choices.keys(), format_func=lambda x: metric_choices[x], index=0
+            "Select option",
+            metric_choices.keys(),
+            format_func=lambda x: metric_choices[x],
+            index=0,
         )
         min_cluster_size = st.number_input(f"Select minimum cluster size", min_value=1, value=5)
         min_samples = st.number_input(f"Select minimum number of samples", min_value=1, value=1)
@@ -150,14 +147,11 @@ with st.sidebar:
             min_cluster_size,
             min_samples,
             cluster_selection_epsilon,
-        )
-
-
-topics["label"] = labels.astype("str")
+        ).astype(str)
 
 x, y = ("c1", "c2") if selected_mapping == "tSNE" else ("u1", "u2")
 st.plotly_chart(
-    utils.plot_clusters(topics, x, y),
+    utils.plot_clusters(topics, mapping, labels, x, y),
     config=default_config,
 )
 
@@ -165,7 +159,7 @@ sc1, sc2 = st.columns(2)
 with sc1:
     st.metric("Number of clusters", len(np.unique(labels)))
 with sc2:
-    pval = utils.manova_significant_difference_pval(topics.iloc[:, 1:-5], topics["label"])
+    pval = utils.manova_significant_difference_pval(topics.iloc[:, 1:], labels)
     if pval < 1e-6:
         pval = "<1e-6"
         st.metric("MANOVA p value", pval)
@@ -180,50 +174,18 @@ with tabs[0]:
     selected_country = st.selectbox("Select country", topics.country.unique(), index=0)
     st.header(f"Country details: {selected_country}")
 
-    if selected_section in [
-        "Impact Assessment of Planned Policies and Measures",
-        "Overview and Process for Establishing the Plan",
-    ]:
-        st.plotly_chart(
-            utils.plot_topic_distribution_radar(topics, selected_country),
-            config=default_config,
-        )
-        st.plotly_chart(
-            utils.plot_topic_distribution_violinplot(topics, selected_country),
-            config=default_config,
-        )
-    else:
-        st.plotly_chart(
-            utils.plot_topic_distribution_radar(
-                topics, selected_country, multiple=True, n_topics=n_topics
-            ),
-            config=default_config,
-        )
-        st.subheader("National Objectives and Targets")
-        st.plotly_chart(
-            utils.plot_topic_distribution_violinplot(
-                topics, selected_country, ind_from=1, ind_to=n_topics + 1
-            ),
-            config=default_config,
-        )
-        st.subheader("Policies and Measures")
-        st.plotly_chart(
-            utils.plot_topic_distribution_violinplot(
-                topics, selected_country, ind_from=n_topics + 1, ind_to=2 * n_topics + 1
-            ),
-            config=default_config,
-        )
-        st.subheader("Current Situation and Reference Projections")
-        st.plotly_chart(
-            utils.plot_topic_distribution_violinplot(
-                topics, selected_country, ind_from=2 * n_topics + 1, ind_to=3 * n_topics + 1
-            ),
-            config=default_config,
-        )
+    st.plotly_chart(
+        utils.plot_topic_distribution_radar(topics, selected_country),
+        config=default_config,
+    )
+    st.plotly_chart(
+        utils.plot_topic_distribution_violinplot(topics, selected_country),
+        config=default_config,
+    )
 
 with tabs[1]:
     st.header("Topic analysis")
-    with open(selected_section_path.replace("probs.csv", "vis.txt"), "r") as file:
+    with open(settings_dict["sections"][selected_section]["vis"], "r") as file:
         html_string = file.read()
     st.components.v1.html(html_string, width=800, height=800, scrolling=True)
     st.header(f"Topic keywords")
@@ -237,52 +199,59 @@ with tabs[1]:
         "#4378bf",
     ] * n_topics
     for i in range(n_topics):
-        st.pyplot(utils.plot_topics(keywords, i, topic_names[i], colors_list[i]))
-        
+        # topic_num = order_dict[selected_section][i] - 1
+        topic_num = i  # TODO to generalize
+        st.pyplot(
+            utils.plot_topics(
+                keywords, i, topic_num, topic_names[topic_num], colors_list[topic_num]
+            )
+        )
+
 with tabs[2]:
-    topics_additional = topics.copy().drop(["c1", "c2", "u1", "u2"], axis=1)
-    topics_additional["country"] = topics_additional["country"].apply(lambda x: x.lower())
-    selected_columns = st.multiselect(
-        "Select topic modelling columns",
-        list(topics_additional.columns[1:-1]),
-        default = list(topics_additional.columns[1:-1])
-    )
-    df_comissions_individual_assesment = load_df_data(DIR + "additional/comissions_individual_assesment.csv", index_col=0)
-    df_planning_for_net_zero_report = load_df_data(DIR + "additional/planning_for_net_zero_report.csv", index_col=0)
-    selected_data = st.selectbox(
-        "Select additional data",
-        ["Comissions Individual Assesment", "Planning for net zero report"],
-        index=1,
-    )
-    df_selected = (
-        df_comissions_individual_assesment.copy()
-        if selected_data == "Comissions Individual Assesment"
-        else df_planning_for_net_zero_report.copy()
-    )
-    df_selected["country"] = df_selected["country"].apply(lambda x: x.lower())
-    default = (
-        [colname for colname in df_selected.columns if "total" in colname.lower()]
-        if selected_data == "Planning for net zero report"
-        else list(df_selected.columns[1:])[:4]
-    )
-    selected_columns_additional = st.multiselect(
-        "Select additional data columns",
-        list(df_selected.columns[1:]),
-        default=default,
-    )
-    merged_df = topics_additional[selected_columns + ["country"]].merge(
-        df_selected[selected_columns_additional + ["country"]], how="left", on="country"
-    )
-    selected_method = st.selectbox(
-        "Select correlation method",
-        ["Pearson", "Kendall", "Spearman"],
-        index=0,
-    )
-    corr_df = merged_df.corr(method=selected_method.lower())
-    corr_df = corr_df.drop(selected_columns, axis=1)
-    corr_df = corr_df.drop(selected_columns_additional, axis=0)
-    st.header("Correlation heatmap")
-    st.write(
-        utils.plot_correlation_heatmap(corr_df),
-        config=default_config,
-    )
+    if len(settings_dict["additional_files"]) > 0:
+        topics_additional = topics.copy()
+        # TODO to generalize
+        # topics_additional["country"] = topics_additional["country"]
+        # selected_columns = st.multiselect(
+        #     "Select topic modelling columns",
+        #     list(topics_additional.columns[1:-1]),
+        #     default=list(topics_additional.columns[1:-1]),
+        # selected_data = st.selectbox(
+        #     "Select additional data",
+        #     ["Comissions Individual Assesment", "Planning for net zero report"],
+        #     index=1,
+        # )
+        # df_selected = (
+        #     df_comissions_individual_assesment.copy()
+        #     if selected_data == "Comissions Individual Assesment"
+        #     else df_planning_for_net_zero_report.copy()
+        # )
+        # df_selected["country"] = df_selected["country"].apply(lambda x: x.lower())
+        # default = (
+        #     [colname for colname in df_selected.columns if "total" in colname.lower()]
+        #     if selected_data == "Planning for net zero report"
+        #     else list(df_selected.columns[1:])[:4]
+        # )
+        # selected_columns_additional = st.multiselect(
+        #     "Select additional data columns",
+        #     list(df_selected.columns[1:]),
+        #     default=default,
+        # )
+        # merged_df = topics_additional[selected_columns + ["country"]].merge(
+        #     df_selected[selected_columns_additional + ["country"]], how="left", on="country"
+        # )
+        # selected_method = st.selectbox(
+        #     "Select correlation method",
+        #     ["Pearson", "Kendall", "Spearman"],
+        #     index=0,
+        # )
+        # corr_df = merged_df.corr(method=selected_method.lower())
+        # corr_df = corr_df.drop(selected_columns, axis=1)
+        # corr_df = corr_df.drop(selected_columns_additional, axis=0)
+        # st.header("Correlation heatmap")
+        # st.write(
+        #     utils.plot_correlation_heatmap(corr_df),
+        #     config=default_config,
+        # )
+    else:
+        st.write("There aren't any additional files defined")
