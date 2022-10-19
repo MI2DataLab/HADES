@@ -1,0 +1,78 @@
+{
+    "sections": 
+    {
+        "Governance mechanism": {
+            "probs": "data/social-policies/lda/Governance_mechanisms_probs.csv",
+            "mapping": "data/social-policies/lda/Governance_mechanisms_mapping.csv",
+            "topic_words": "data/social-policies/lda/Governance_mechanisms_topic_words.csv",
+            "vis": "data/social-policies/lda/Governance_mechanisms_vis.txt"
+        },
+        "Impact of minimum income schemes": {
+            "probs": "data/social-policies/lda/Impact_of_minimum_income_schemes_probs.csv", 
+            "mapping": "data/social-policies/lda/Impact_of_minimum_income_schemes_mapping.csv",
+            "topic_words": "data/social-policies/lda/Impact_of_minimum_income_schemes_topic_words.csv",
+            "vis": "data/social-policies/lda/Impact_of_minimum_income_schemes_vis.txt"
+        },
+        "Links to social services": {
+            "probs": "data/social-policies/lda/Links_to_social_services_probs.csv", 
+            "mapping": "data/social-policies/lda/Links_to_social_services_mapping.csv",
+            "topic_words": "data/social-policies/lda/Links_to_social_services_topic_words.csv",
+            "vis": "data/social-policies/lda/Links_to_social_services_vis.txt"
+        },
+        "Links with labour market activation": {
+            "probs": "data/social-policies/lda/Links_with_labour_market_activation_probs.csv", 
+            "mapping": "data/social-policies/lda/Links_with_labour_market_activation_mapping.csv",
+            "topic_words": "data/social-policies/lda/Links_with_labour_market_activation_topic_words.csv",
+            "vis": "data/social-policies/lda/Links_with_labour_market_activation_vis.txt"
+        },
+        "National schemes": {
+            "probs": "data/social-policies/lda/National_schemes_probs.csv", 
+            "mapping": "data/social-policies/lda/National_schemes_mapping.csv",
+            "topic_words": "data/social-policies/lda/National_schemes_topic_words.csv",
+            "vis": "data/social-policies/lda/National_schemes_vis.txt"
+        },
+        "Summary": {
+            "probs": "data/social-policies/lda/Summary_probs.csv", 
+            "mapping": "data/social-policies/lda/Summary_mapping.csv",
+            "topic_words": "data/social-policies/lda/Summary_topic_words.csv",
+            "vis": "data/social-policies/lda/Summary_vis.txt"
+        },
+        "ENS Governance mechanism": {
+            "probs": "data/social-policies/ensemble-lda/Governance_mechanisms_probs.csv",
+            "mapping": "data/social-policies/ensemble-lda/Governance_mechanisms_mapping.csv",
+            "topic_words": "data/social-policies/ensemble-lda/Governance_mechanisms_topic_words.csv",
+            "vis": "data/social-policies/ensemble-lda/Governance_mechanisms_vis.txt"
+        },
+        "ENS Impact of minimum income schemes": {
+            "probs": "data/social-policies/ensemble-lda/Impact_of_minimum_income_schemes_probs.csv", 
+            "mapping": "data/social-policies/ensemble-lda/Impact_of_minimum_income_schemes_mapping.csv",
+            "topic_words": "data/social-policies/ensemble-lda/Impact_of_minimum_income_schemes_topic_words.csv",
+            "vis": "data/social-policies/ensemble-lda/Impact_of_minimum_income_schemes_vis.txt"
+        },
+        "ENS Links to social services": {
+            "probs": "data/social-policies/ensemble-lda/Links_to_social_services_probs.csv", 
+            "mapping": "data/social-policies/ensemble-lda/Links_to_social_services_mapping.csv",
+            "topic_words": "data/social-policies/ensemble-lda/Links_to_social_services_topic_words.csv",
+            "vis": "data/social-policies/ensemble-lda/Links_to_social_services_vis.txt"
+        },
+        "ENS Links with labour market activation": {
+            "probs": "data/social-policies/ensemble-lda/Links_with_labour_market_activation_probs.csv", 
+            "mapping": "data/social-policies/ensemble-lda/Links_with_labour_market_activation_mapping.csv",
+            "topic_words": "data/social-policies/ensemble-lda/Links_with_labour_market_activation_topic_words.csv",
+            "vis": "data/social-policies/ensemble-lda/Links_with_labour_market_activation_vis.txt"
+        },
+        "ENS National schemes": {
+            "probs": "data/social-policies/ensemble-lda/National_schemes_probs.csv", 
+            "mapping": "data/social-policies/ensemble-lda/National_schemes_mapping.csv",
+            "topic_words": "data/social-policies/ensemble-lda/National_schemes_topic_words.csv",
+            "vis": "data/social-policies/ensemble-lda/National_schemes_vis.txt"
+        },
+        "ENS Summary": {
+            "probs": "data/social-policies/ensemble-lda/Summary_probs.csv", 
+            "mapping": "data/social-policies/ensemble-lda/Summary_mapping.csv",
+            "topic_words": "data/social-policies/ensemble-lda/Summary_topic_words.csv",
+            "vis": "data/social-policies/ensemble-lda/Summary_vis.txt"
+        }
+    },
+    "additional_files": []
+}
