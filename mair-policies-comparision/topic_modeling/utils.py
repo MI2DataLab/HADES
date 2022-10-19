@@ -1,3 +1,4 @@
+import string
 from typing import Dict, List, Optional, Tuple, Union
 
 from collections import Counter
@@ -20,6 +21,7 @@ def check_coherence_for_topics_num(
     passes: int = 8,
     iterations: int = 100,
     random_state: Optional[int] = None,
+    coherence_file: str = False,
 ) -> Tuple[pd.Series, List[LdaMulticore], pd.Series, Dictionary, List[float]]:
     filtered_lemmas = get_filtered_lemmas(df, filter_dict, common_words_filtered)
     lemmas_dictionary = get_lemmas_dictionary(filtered_lemmas)
@@ -28,6 +30,13 @@ def check_coherence_for_topics_num(
         encoded_docs, topic_numbers_range, passes, iterations, alpha, random_state
     )
     cvs = get_coherences(models, filtered_lemmas, lemmas_dictionary)
+    if coherence_file:
+        umass = get_coherences(models, filtered_lemmas, lemmas_dictionary, coherence = "u_mass")
+        pd.DataFrame({
+            "topic_num": range(*topic_numbers_range),
+            "c_v": cvs,
+            "u_mass": umass 
+        }).to_csv(coherence_file + ".csv")
     return (
         filtered_lemmas,
         models,
@@ -79,10 +88,13 @@ def get_lda_models(
 
 
 def get_coherences(
-    models: List[LdaMulticore], texts: Union[pd.Series, List[List[str]]], dictionary: Dictionary
+    models: List[LdaMulticore],
+    texts: Union[pd.Series, List[List[str]]],
+    dictionary: Dictionary,
+    coherence: str = "c_v",
 ) -> List[float]:
     return [
-        CoherenceModel(model, texts=texts, dictionary=dictionary).get_coherence()
+        CoherenceModel(model, texts=texts, dictionary=dictionary, coherence=coherence).get_coherence()
         for model in tqdm(models)
     ]
 
