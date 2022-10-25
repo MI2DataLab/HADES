@@ -1,55 +1,10 @@
-from glob import glob
 import pandas as pd
 import numpy as np
-import re
 import streamlit as st
 from copy import deepcopy
 import utils
-import json
 
-APP_SETTINGS_FILENAME = "app_settings_social_policies.json"
-
-f = open(APP_SETTINGS_FILENAME)
-settings_dict = json.load(f)
-
-default_config = {
-    "displaylogo": False,
-    "staticPlot": False,
-    "toImageButtonOptions": {
-        "height": None,
-        "width": None,
-    },
-    "modeBarButtonsToRemove": [
-        "sendDataToCloud",
-        "lasso2d",
-        "autoScale2d",
-        "select2d",
-        "zoom2d",
-        "pan2d",
-        "zoomIn2d",
-        "zoomOut2d",
-        "resetScale2d",
-        "toggleSpikelines",
-        "hoverCompareCartesian",
-        "hoverClosestCartesian",
-    ],
-}
-sections = list(settings_dict["sections"].keys())
-
-# order_dict = {
-#     "Decarbonisation": [3, 1, 4, 2, 5],
-#     "Energy efficiency": [1, 3, 5, 4, 2],
-#     "Energy security": [2, 3, 1],
-#     "Internal market": [1, 2, 3],
-#     "R&I and Competitiveness": [1, 2, 3],
-#     "Impact Assessment of Planned Policies and Measures": [3, 4, 2, 1],
-#     "Overview and Process for Establishing the Plan": [2, 3, 1, 4],
-# }
-
-mappings = ["tSNE", "UMAP"]
-clusterings = ["Hierarchical", "K-Means", "HDBSCAN"]
-
-metric_choices = {"ir": "information radius", "hd": "Hellinger distance"}
+import config
 
 
 @st.cache
@@ -69,11 +24,11 @@ def load_df_keywords_data(df_file_name: str, index_col=False) -> pd.DataFrame:
 
 st.title("Policy Comparison App")
 with st.sidebar:
-    selected_section = st.selectbox("Select section", sections, index=0)
-    topics_load = load_df_data(settings_dict["sections"][selected_section]["probs"])
-    mapping_load = load_df_mapping_data(settings_dict["sections"][selected_section]["mapping"])
+    selected_section = st.selectbox("Select section", config.SECTIONS, index=0)
+    topics_load = load_df_data(config.SETTINGS_DICT["sections"][selected_section]["probs"])
+    mapping_load = load_df_mapping_data(config.SETTINGS_DICT["sections"][selected_section]["mapping"])
     keywords_load = load_df_keywords_data(
-        settings_dict["sections"][selected_section]["topic_words"]
+        config.SETTINGS_DICT["sections"][selected_section]["topic_words"]
     )
     topics = deepcopy(topics_load)
     mapping = deepcopy(mapping_load)
@@ -84,18 +39,18 @@ with st.sidebar:
 
     selected_mapping = st.selectbox(
         "Select mapping",
-        mappings,
+        config.MAPPINGS,
         index=0,
         help="Choose visualization method for representation of countries on 2D plot based on their agendas",
     )
 
-    selected_clustering = st.selectbox("Select clustering method", clusterings, index=0)
+    selected_clustering = st.selectbox("Select clustering method", config.CLUSTERINGS, index=0)
 
     if selected_clustering == "Hierarchical":
         distance_metric = st.selectbox(
             "Select option",
-            metric_choices.keys(),
-            format_func=lambda x: metric_choices[x],
+            config.METRIC_CHOICES.keys(),
+            format_func=lambda x: config.METRIC_CHOICES[x],
             index=0,
         )
 
@@ -124,8 +79,8 @@ with st.sidebar:
     elif selected_clustering == "HDBSCAN":
         distance_metric = st.selectbox(
             "Select option",
-            metric_choices.keys(),
-            format_func=lambda x: metric_choices[x],
+            config.METRIC_CHOICES.keys(),
+            format_func=lambda x: config.METRIC_CHOICES[x],
             index=0,
         )
         min_cluster_size = st.number_input(f"Select minimum cluster size", min_value=1, value=5)
@@ -152,7 +107,7 @@ with st.sidebar:
 x, y = ("c1", "c2") if selected_mapping == "tSNE" else ("u1", "u2")
 st.plotly_chart(
     utils.plot_clusters(topics, mapping, labels, x, y),
-    config=default_config,
+    config=config.DEFAULT_CONFIG,
 )
 
 sc1, sc2 = st.columns(2)
@@ -176,16 +131,16 @@ with tabs[0]:
 
     st.plotly_chart(
         utils.plot_topic_distribution_radar(topics, selected_country),
-        config=default_config,
+        config=config.DEFAULT_CONFIG,
     )
     st.plotly_chart(
         utils.plot_topic_distribution_violinplot(topics, selected_country),
-        config=default_config,
+        config=config.DEFAULT_CONFIG,
     )
 
 with tabs[1]:
     st.header("Topic analysis")
-    with open(settings_dict["sections"][selected_section]["vis"], "r") as file:
+    with open(config.SETTINGS_DICT["sections"][selected_section]["vis"], "r") as file:
         html_string = file.read()
     st.components.v1.html(html_string, width=800, height=800, scrolling=True)
     st.header(f"Topic keywords")
@@ -208,7 +163,7 @@ with tabs[1]:
         )
 
 with tabs[2]:
-    if len(settings_dict["additional_files"]) > 0:
+    if len(config.SETTINGS_DICT["additional_files"]) > 0:
         topics_additional = topics.copy()
         # TODO to generalize
         # topics_additional["country"] = topics_additional["country"]
@@ -251,7 +206,7 @@ with tabs[2]:
         # st.header("Correlation heatmap")
         # st.write(
         #     utils.plot_correlation_heatmap(corr_df),
-        #     config=default_config,
+        #     config=config.DEFAULT_CONFIG,
         # )
     else:
         st.write("There aren't any additional files defined")
