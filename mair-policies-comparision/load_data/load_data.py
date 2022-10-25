@@ -1,6 +1,7 @@
 from typing import List
 
 import pandas as pd
+import pycountry
 import spacy
 from gensim.models import Phrases
 
@@ -17,6 +18,7 @@ def load_dataframe(path: str, text_path_col: str = "text_path") -> pd.DataFrame:
     df = pd.read_csv(path, index_col=0)
     assert text_path_col in df.columns
     df["text"] = df[text_path_col].apply(read_txt)
+    df = convert_country(df)
     return df
 
 
@@ -35,7 +37,15 @@ def process_text(
     bigram = Phrases(ngram_data, min_count=1, delimiter=" ")
     trigram = Phrases(bigram[ngram_data], min_count=1, delimiter=" ")
 
-    df["lemmas"] = df["lemmas"].apply(
-        lambda doc: doc + list(_multiply_ngrams(trigram[bigram[doc]]))
-    )
+    df["lemmas"] = df["lemmas"].apply(lambda doc: doc + list(_multiply_ngrams(trigram[bigram[doc]])))
+    return df
+
+def convert_country(df: pd.DataFrame) -> pd.DataFrame:
+    df = df.copy()
+    try:
+        df["country"] = df["country"].apply(
+            lambda country: pycountry.countries.search_fuzzy(country.replace("_", " "))[0].name
+        )
+    except:
+        pass
     return df
