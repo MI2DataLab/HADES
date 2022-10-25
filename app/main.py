@@ -25,11 +25,14 @@ def load_df_keywords_data(df_file_name: str, index_col=False) -> pd.DataFrame:
 st.title("Policy Comparison App")
 with st.sidebar:
     selected_section = st.selectbox("Select section", config.SECTIONS, index=0)
-    topics_load = load_df_data(config.SETTINGS_DICT["sections"][selected_section]["probs"])
-    mapping_load = load_df_mapping_data(config.SETTINGS_DICT["sections"][selected_section]["mapping"])
-    keywords_load = load_df_keywords_data(
-        config.SETTINGS_DICT["sections"][selected_section]["topic_words"]
+    topics_load = utils.convert_country(
+        load_df_data(config.SETTINGS_DICT["sections"][selected_section]["probs"])
     )
+    mapping_load = utils.convert_country(
+        load_df_mapping_data(config.SETTINGS_DICT["sections"][selected_section]["mapping"])
+    )
+    keywords_load = load_df_keywords_data(config.SETTINGS_DICT["sections"][selected_section]["topic_words"])
+
     topics = deepcopy(topics_load)
     mapping = deepcopy(mapping_load)
     keywords = deepcopy(keywords_load)
@@ -65,7 +68,7 @@ with st.sidebar:
         t = st.slider(
             f"Select distance threshold",
             min_value=0.0,
-            value=float(np.mean(linkage[:, 2])),
+            value=float(np.median(linkage[:, 2])),
             max_value=float(np.max(linkage[:, 2])),
             step=1e-5,
             format="%.5f",
@@ -73,7 +76,7 @@ with st.sidebar:
         labels = utils.get_hierarchical_clusters(linkage, t).astype(str)
 
     elif selected_clustering == "K-Means":
-        n_clusters = st.number_input(f"Select number of clusters", min_value=2, value=2)
+        n_clusters = st.number_input(f"Select number of clusters", min_value=2, value=4)
         labels = utils.get_kmeans_clusters(topic_matrix, n_clusters).astype(str)
 
     elif selected_clustering == "HDBSCAN":
@@ -93,9 +96,7 @@ with st.sidebar:
             format="%.5f",
         )
 
-        distance_matrix = utils.calculate_distance_matrix(
-            pd.DataFrame(topic_matrix), distance_metric
-        )
+        distance_matrix = utils.calculate_distance_matrix(pd.DataFrame(topic_matrix), distance_metric)
 
         labels = utils.get_hdbscan_clusters(
             distance_matrix,
@@ -156,11 +157,7 @@ with tabs[1]:
     for i in range(n_topics):
         # topic_num = order_dict[selected_section][i] - 1
         topic_num = i  # TODO to generalize
-        st.pyplot(
-            utils.plot_topics(
-                keywords, i, topic_num, topic_names[topic_num], colors_list[topic_num]
-            )
-        )
+        st.pyplot(utils.plot_topics(keywords, i, topic_num, topic_names[topic_num], colors_list[topic_num]))
 
 with tabs[2]:
     if len(config.SETTINGS_DICT["additional_files"]) > 0:
