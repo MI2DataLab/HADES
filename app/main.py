@@ -46,23 +46,30 @@ with st.sidebar:
         "Select mapping",
         config.MAPPINGS,
         index=0,
-        help="Choose visualization method for representation of countries on 2D plot based on their agendas",
+        help="Method for representation of entities on 2D plot visualization based on their agendas",
     )
 
-    selected_clustering = st.selectbox("Select clustering method", config.CLUSTERINGS, index=0)
+    selected_clustering = st.selectbox(
+        "Select clustering method",
+        config.CLUSTERINGS,
+        index=0,
+        help="Method used for grouping countries",
+    )
 
     if selected_clustering == "Hierarchical":
         distance_metric = st.selectbox(
-            "Select option",
+            "Select metric",
             config.METRIC_CHOICES.keys(),
             format_func=lambda x: config.METRIC_CHOICES[x],
             index=0,
+            help="Metric for calculating distances between agendas",
         )
 
         linkage_method = st.selectbox(
             "Select linkage algorithm",
             ["average", "single", "complete", "weighted"],
             index=0,
+            help="Linkage scheme used for grouping countries",
         )
 
         linkage = utils.calculate_linkage_matrix(topic_matrix, linkage_method, distance_metric)
@@ -74,6 +81,7 @@ with st.sidebar:
             max_value=float(np.max(linkage[:, 2])),
             step=1e-5,
             format="%.5f",
+            help="Distance threshold used for creating groups",
         )
         labels = utils.get_hierarchical_clusters(linkage, t).astype(str)
 
