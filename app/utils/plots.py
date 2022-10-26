@@ -14,15 +14,16 @@ def plot_clusters(
     labels,
     x="c1",
     y="c2",
+    entity_colname="country",
     try_flags=True,
 ):
-    df_probs["country"] = df_probs["country"].astype(str)
-    df_mapping["country"] = df_mapping["country"].astype(str)
-    df = df_probs.merge(df_mapping, on="country")
+    df_probs[entity_colname] = df_probs[entity_colname].astype(str)
+    df_mapping[entity_colname] = df_mapping[entity_colname].astype(str)
+    df = df_probs.merge(df_mapping, on=entity_colname)
     df["label"] = labels
     iso_alpha2 = None
     if try_flags:
-        iso_alpha2 = df["country"].apply(
+        iso_alpha2 = df[entity_colname].apply(
             lambda country: pycountry.countries.search_fuzzy(country.split("_")[-1])[0].alpha_2
         )
 
@@ -74,38 +75,38 @@ def plot_clusters(
     return fig
 
 
-def plot_topic_distances(df, selected_text, text="country", label="label"):
+def plot_topic_distances(df, selected_text, entity_colname="country", label="label"):
     topics_number = len(df.columns) - 5
     plot_labels = np.arange(topics_number)
     in_cluster = []
     out_cluster = []
 
     for idx in range(topics_number):
-        cluster = df.loc[df[text] == selected_text, "label"].values[0]
-        in_cluster_texts = df.loc[df[label] == cluster, text].values
+        cluster = df.loc[df[entity_colname] == selected_text, "label"].values[0]
+        in_cluster_texts = df.loc[df[label] == cluster, entity_colname].values
 
         if len(in_cluster_texts) > 1:
             avg_in = 0
             for text_item in in_cluster_texts:
                 avg_in += abs(
-                    df.loc[df[text] == text_item, str(idx)].values[0]
-                    - df.loc[df[text] == selected_text, str(idx)].values[0]
+                    df.loc[df[entity_colname] == text_item, str(idx)].values[0]
+                    - df.loc[df[entity_colname] == selected_text, str(idx)].values[0]
                 )
             avg_in /= len(in_cluster_texts) - 1
             in_cluster.append(avg_in)
         else:
             in_cluster.append(0)
 
-        if (len(df[text].values) - len(in_cluster_texts)) > 0:
+        if (len(df[entity_colname].values) - len(in_cluster_texts)) > 0:
             avg_out = 0
-            for text_item in df[text].values:
+            for text_item in df[entity_colname].values:
                 if text_item in in_cluster_texts:
                     continue
                 avg_out += abs(
-                    df.loc[df[text] == text_item, str(idx)].values[0]
-                    - df.loc[df[text] == selected_text, str(idx)].values[0]
+                    df.loc[df[entity_colname] == text_item, str(idx)].values[0]
+                    - df.loc[df[entity_colname] == selected_text, str(idx)].values[0]
                 )
-            avg_out /= len(df[text].values) - len(in_cluster_texts)
+            avg_out /= len(df[entity_colname].values) - len(in_cluster_texts)
             out_cluster.append(avg_out)
         else:
             out_cluster.append(0)
@@ -123,7 +124,7 @@ def plot_topic_distances(df, selected_text, text="country", label="label"):
     return fig
 
 
-def plot_topic_distribution(df, selected_text, text="country", label="label"):
+def plot_topic_distribution(df, selected_text, entity_colname="country", label="label"):
     topics_number = len(df.columns) - 5
     fig, axes = plt.subplots(topics_number, 1, figsize=(15, 1.5 * topics_number))
     plt.subplots_adjust(hspace=0.6)
@@ -142,18 +143,20 @@ def plot_topic_distribution(df, selected_text, text="country", label="label"):
     for idx in range(topics_number):
         axes[idx].set_title(f"Topic {idx}")
         axes[idx].axes.yaxis.set_ticklabels([])
-        axes[idx].axvline(x=df.loc[df[text] == selected_text, str(idx)].values[0], color="g", lw=3)
+        axes[idx].axvline(
+            x=df.loc[df[entity_colname] == selected_text, str(idx)].values[0], color="g", lw=3
+        )
         axes[idx].set_xticks([0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1])
 
-        cluster = df.loc[df[text] == selected_text, "label"].values[0]
-        in_cluster_texts = df.loc[df[label] == cluster, text].values
+        cluster = df.loc[df[entity_colname] == selected_text, "label"].values[0]
+        in_cluster_texts = df.loc[df[label] == cluster, entity_colname].values
 
         if len(in_cluster_texts) > 1:
-            avg_in = df.loc[df[text].isin(in_cluster_texts), str(idx)].mean()
+            avg_in = df.loc[df[entity_colname].isin(in_cluster_texts), str(idx)].mean()
             axes[idx].axvline(x=avg_in, color="b", lw=3)
 
-        if (len(df[text].values) - len(in_cluster_texts)) > 0:
-            avg_out = df.loc[~df[text].isin(in_cluster_texts), str(idx)].mean()
+        if (len(df[entity_colname].values) - len(in_cluster_texts)) > 0:
+            avg_out = df.loc[~df[entity_colname].isin(in_cluster_texts), str(idx)].mean()
             axes[idx].axvline(x=avg_out, color="r", lw=3)
 
     legend_lines = [
@@ -170,43 +173,75 @@ def plot_topic_distribution(df, selected_text, text="country", label="label"):
     return fig
 
 
-def plot_topic_distribution_radar(df, selected_text, text="country"):
+def plot_topic_distribution_radar(df, selected_entities, entity_colname="country"):
     fig = go.Figure()
-    topic_names = df.columns[1:]
-
-    r = df.loc[df[text] == selected_text].iloc[:, 1:].values[0]
-    fig.add_trace(go.Scatterpolar(r=r, theta=topic_names, fill="toself", name="Whole section"))
+    topic_names = np.hstack((df.columns[1:], df.columns[1]))
+    sub_df = df.loc[df[entity_colname].isin(selected_entities)]
+    for i, row in sub_df.iterrows():
+        r = np.hstack((row[1:].values, row.iloc[1]))
+        name = row[0]
+        fig.add_trace(
+            go.Scatterpolar(
+                r=r,
+                theta=topic_names,
+                fill="toself",
+                name=name,
+                hovertemplate="<b>" + name + "</b><br>" + "%{theta}: %{r}",
+            )
+        )
 
     fig.update_layout(
-        polar=dict(radialaxis=dict(visible=True), bgcolor="rgb(237,237,237)"),
+        polar=dict(
+            radialaxis=dict(
+                visible=True,
+                linecolor="black",
+                rangemode="nonnegative",
+                tickfont_size=12,
+                title_text="Topic probability",
+            ),
+            angularaxis=dict(
+                rotation=90,
+            ),
+            bgcolor="rgb(237,237,237)",
+        ),
         showlegend=False,
     )
     fig.update_layout(
-        margin=dict(l=20, r=20, t=20, b=20), height=300, paper_bgcolor="rgba(0,0,0,0)"
+        margin=dict(l=20, r=20, t=20, b=20),
+        height=500,
+        paper_bgcolor="rgba(0,0,0,0)",
     )
     return fig
 
 
-def plot_topic_distribution_violinplot(df, selected_text, text="country"):
-    df_melted = df.melt(id_vars=text, value_vars=df.columns[1:])
-    selected_ids = np.array(df_melted[df_melted[text] == selected_text].index)
-    fig = go.Violin(
-        x=df_melted["variable"],
-        y=df_melted["value"],
-        text=df_melted["country"],
-        points="all",
-        box_visible=True,
-        line_color="#46bac2",
-        meanline_visible=True,
-        pointpos=0,
-        selectedpoints=selected_ids,
-        selected={"marker_color": "#371ea3"},
-        unselected={"marker_opacity": 0.75},
-        hovertemplate="<b>%{text}</b>: %{y}<extra>%{x}</extra>",
+def plot_topic_distribution_violinplot(df, selected_entities, entity_colname="country"):
+    df_melted = df.melt(id_vars=entity_colname, value_vars=df.columns[1:])
+    selected_ids = np.array(df_melted[df_melted[entity_colname].isin(selected_entities)].index)
+    fig = go.Figure()
+    fig.add_trace(
+        go.Violin(
+            x=df_melted["variable"],
+            y=df_melted["value"],
+            text=df_melted["country"],
+            points="all",
+            box_visible=True,
+            line_color="#46bac2",
+            meanline_visible=True,
+            pointpos=1.5,
+            jitter=0.7,
+            selectedpoints=selected_ids,
+            selected={"marker_color": "#371ea3", "marker_opacity": 1.0},
+            unselected={"marker_opacity": 0.5},
+            hovertemplate="<b>%{text}</b>: %{y}<extra>%{x}</extra>",
+            hoveron="points",
+        )
     )
-    fig = go.Figure(fig)
     fig.update_layout(
-        margin=dict(l=20, r=20, t=20, b=20), height=300, paper_bgcolor="rgba(0,0,0,0)"
+        margin=dict(l=20, r=20, t=20, b=20),
+        height=600,
+        paper_bgcolor="rgba(0,0,0,0)",
+        xaxis_title="Topic",
+        yaxis_title="Topic probability",
     )
     return fig
 
