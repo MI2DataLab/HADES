@@ -31,7 +31,9 @@ with st.sidebar:
     mapping_load = utils.convert_country(
         load_df_mapping_data(config.SETTINGS_DICT["sections"][selected_section]["mapping"])
     )
-    keywords_load = load_df_keywords_data(config.SETTINGS_DICT["sections"][selected_section]["topic_words"])
+    keywords_load = load_df_keywords_data(
+        config.SETTINGS_DICT["sections"][selected_section]["topic_words"]
+    )
 
     topics = deepcopy(topics_load)
     mapping = deepcopy(mapping_load)
@@ -96,7 +98,9 @@ with st.sidebar:
             format="%.5f",
         )
 
-        distance_matrix = utils.calculate_distance_matrix(pd.DataFrame(topic_matrix), distance_metric)
+        distance_matrix = utils.calculate_distance_matrix(
+            pd.DataFrame(topic_matrix), distance_metric
+        )
 
         labels = utils.get_hdbscan_clusters(
             distance_matrix,
@@ -127,15 +131,18 @@ with sc2:
 
 tabs = st.tabs(["Country details", "Topic details", "Additional data comparision"])
 with tabs[0]:
-    selected_country = st.selectbox("Select country", topics.country.unique(), index=0)
-    st.header(f"Country details: {selected_country}")
-
+    st.header(f"Details for selected countries")
+    selected_entities = st.multiselect(
+        label="Select countries",
+        options=topics.country.unique(),
+        default=topics.country.unique()[:2],  # assumption that there are two countries/entities
+    )
     st.plotly_chart(
-        utils.plot_topic_distribution_radar(topics, selected_country),
+        utils.plot_topic_distribution_radar(topics, selected_entities),
         config=config.DEFAULT_CONFIG,
     )
     st.plotly_chart(
-        utils.plot_topic_distribution_violinplot(topics, selected_country),
+        utils.plot_topic_distribution_violinplot(topics, selected_entities),
         config=config.DEFAULT_CONFIG,
     )
 
@@ -157,7 +164,11 @@ with tabs[1]:
     for i in range(n_topics):
         # topic_num = order_dict[selected_section][i] - 1
         topic_num = i  # TODO to generalize
-        st.pyplot(utils.plot_topics(keywords, i, topic_num, topic_names[topic_num], colors_list[topic_num]))
+        st.pyplot(
+            utils.plot_topics(
+                keywords, i, topic_num, topic_names[topic_num], colors_list[topic_num]
+            )
+        )
 
 with tabs[2]:
     if len(config.SETTINGS_DICT["additional_files"]) > 0:
