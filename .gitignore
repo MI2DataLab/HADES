@@ -127,3 +127,10 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+climate_results/
+social_results/
+
+# MacOS hidden files
+*.DS_Store
+mair-policies-comparision/documents.csv

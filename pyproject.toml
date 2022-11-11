@@ -22,8 +22,14 @@ PyPDF2 = "^2.6.0"
 matplotlib = "^3.5.2"
 seaborn = "^0.11.2"
 pyLDAvis = "^3.3.1"
+hdbscan = "^0.8.28"
+pycountry = "^22.3.5"
+statsmodels = "^0.13.2"
+openai = "^0.23.0"
 
 [tool.poetry.dev-dependencies]
+streamlit = "^1.11.1"
+plotly = "^5.9.0"
 
 [tool.black]
 line-length = 100

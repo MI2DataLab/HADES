@@ -14,7 +14,7 @@ def process_tokens(
     return [
         token
         for token in spacy_text
-        if not any([token.is_stop, token.is_punct, token.lemma_ in stop_words, not token.is_alpha])
+        if not any([token.is_stop, token.is_punct, token.lemma_.lower() in stop_words, not token.is_alpha])
     ]
 
 

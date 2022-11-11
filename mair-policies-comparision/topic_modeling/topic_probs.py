@@ -1,5 +1,5 @@
-from typing import Dict, List, Tuple, Union
 import warnings
+from typing import Callable, Dict, List, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -7,7 +7,6 @@ import scipy.cluster.hierarchy as hc
 import scipy.spatial as sp
 from gensim.corpora.dictionary import Dictionary
 from gensim.models import LdaModel
-from sklearn.manifold import TSNE
 
 
 def get_topic_probs(
@@ -31,24 +30,28 @@ def get_topic_probs(
 
 
 def calculate_linkage_matrix(
-    topic_probs: pd.DataFrame, method: str = "average", metric: str = "cosine"
+    topic_probs: pd.DataFrame, method: str = "average", metric: str = "ir"
 ) -> np.ndarray:
-    return hc.linkage(topic_probs, method=method, metric=metric)
+    return hc.linkage(topic_probs, method=method, metric=_get_metric(metric))
 
 
-def calculate_distance_matrix(topic_probs: pd.DataFrame, metric: str = "hd") -> pd.DataFrame:
+def calculate_distance_matrix(topic_probs: pd.DataFrame, metric: str = "ir") -> pd.DataFrame:
+    distances = sp.distance.squareform(sp.distance.pdist(topic_probs.values, metric=_get_metric(metric)))
+    return pd.DataFrame(distances, index=topic_probs.index, columns=topic_probs.index)
+
+
+def _get_metric(metric: str) -> Union[str, Callable]:
     if metric == "ir":
         metric = lambda p, q: np.sum(p * np.log(2 * p / (p + q))) + np.sum(
             q * np.log(2 * q / (p + q))
         )
     if metric == "hd":
         metric = lambda p, q: np.sqrt(np.sum((np.sqrt(p) - np.sqrt(q)) ** 2)) / np.sqrt(2)
-    distances = sp.distance.squareform(sp.distance.pdist(topic_probs.values, metric=metric))
-    return pd.DataFrame(distances, index=topic_probs.index, columns=topic_probs.index)
+    return metric
 
 
-def get_similarities(topic_probs: pd.DataFrame) -> np.ndarray:
-    return sp.distance.squareform(sp.distance.pdist(topic_probs.values, metric="cosine"))
+def get_similarities(topic_probs: pd.DataFrame, metric: str = "ir") -> np.ndarray:
+    return sp.distance.squareform(sp.distance.pdist(topic_probs.values, metric=_get_metric(metric)))
 
 
 def shift_similarity(
@@ -87,7 +90,7 @@ def topic_probs_by_column_binded(
 ) -> pd.DataFrame:
     result = []
     column_vals_added = []
-    column_vals = modeling_results.country.unique()
+    column_vals = modeling_results[column].unique()
     rows_by_column = modeling_results.groupby(column).count()[0].max()
     for column_val in column_vals:
         df_tmp = modeling_results[modeling_results[column] == column_val]
@@ -101,30 +104,5 @@ def topic_probs_by_column_binded(
     return res
 
 
-def tsne_dim_reduction(
-    result_df: pd.DataFrame,
-    num_topics: int,
-    random_state: int = 42,
-    perplexity: int = 40,
-    n_iter: int = 1000,
-    init: str = "pca",
-    learning_rate: Union[str, float] = "auto",
-) -> pd.DataFrame:
-    tsne_result_df = result_df.copy()
-    tsne = TSNE(
-        n_components=2,
-        verbose=1,
-        perplexity=perplexity,
-        n_iter=n_iter,
-        init=init,
-        learning_rate=learning_rate,
-        random_state=random_state,
-    )
-    tsne_raw_result = tsne.fit_transform(result_df.iloc[:, -num_topics:])
-    tsne_result_df["c1"] = tsne_raw_result[:, 0]
-    tsne_result_df["c2"] = tsne_raw_result[:, 1]
-    return tsne_result_df
-
-
-def get_hierarchical_clusters(linkage: np.ndarray, t: float = 1.0):
-    return hc.fcluster(linkage, t=t)
+def get_hierarchical_clusters(linkage: np.ndarray, t: float = 1.0, criterion: str = "distance"):
+    return hc.fcluster(linkage, t=t, criterion=criterion)
