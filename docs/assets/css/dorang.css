@@ -11515,8 +11515,7 @@ a:hover {
   top: 0;
   height: 100%;
   width: 100%;
-  background-image: -webkit-radial-gradient(48% 42%, 140% 110%, rgba(33, 37, 41, 0.5), rgba(33, 37, 41, 0.6), rgba(33, 37, 41, 0.7), rgba(33, 37, 41, 0.8), rgba(33, 37, 41, 0.93), #212529 55%, #212529 200%);
-  background-image: radial-gradient(140% 110% at 48% 42%, rgba(33, 37, 41, 0.5), rgba(33, 37, 41, 0.6), rgba(33, 37, 41, 0.7), rgba(33, 37, 41, 0.8), rgba(33, 37, 41, 0.93), #212529 55%, #212529 200%);
+  background-image: -webkit-radial-gradient(50% 55%, 200% 150%, rgba(33, 37, 41, 0.7), rgba(33, 37, 41, 0.7), rgba(33, 37, 41, 0.0), rgba(33, 37, 41, 0.0), rgba(33, 37, 41, 0.0), #212529 55%, #212529 200%);
 }
 
 .header .header-content {
