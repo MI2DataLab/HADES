@@ -72,7 +72,6 @@ def _topics_df(model: LdaModel, docs: pd.Series, num_words: int = 10) -> pd.Data
 
 def tsne_dim_reduction(
     result_df: pd.DataFrame,
-    num_topics: int,
     random_state: int = 42,
     perplexity: int = 40,
     n_iter: int = 1000,
@@ -89,7 +88,7 @@ def tsne_dim_reduction(
         learning_rate=learning_rate,
         random_state=random_state,
     )
-    tsne_raw_result = tsne.fit_transform(result_df.iloc[:, -num_topics:])
+    tsne_raw_result = tsne.fit_transform(result_df)
     tsne_result_df["c1"] = tsne_raw_result[:, 0]
     tsne_result_df["c2"] = tsne_raw_result[:, 1]
     return tsne_result_df[["c1", "c2"]]
@@ -97,7 +96,6 @@ def tsne_dim_reduction(
 
 def umap_dim_reduction(
     result_df: pd.DataFrame,
-    num_topics: int,
     random_state: int = 42,
     n_neighbors: int = 7,
     metric: str = "euclidean",
@@ -112,7 +110,7 @@ def umap_dim_reduction(
         learning_rate=learning_rate,
         random_state=random_state,
     )
-    umap_raw_result = umap.fit_transform(result_df.iloc[:, -num_topics:])
+    umap_raw_result = umap.fit_transform(result_df)
     umap_result_df["u1"] = umap_raw_result[:, 0]
     umap_result_df["u2"] = umap_raw_result[:, 1]
     return umap_result_df[["u1", "u2"]]

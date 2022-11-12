@@ -9,7 +9,12 @@ from gensim.corpora.dictionary import Dictionary
 from gensim.models import CoherenceModel, EnsembleLda, LdaModel
 from gensim.models.ldamulticore import LdaMulticore
 from sklearn.manifold import TSNE
-from topic_modeling.utils import get_filtered_lemmas, get_lemmas_dictionary
+from topic_modeling.utils import (
+    get_filtered_lemmas,
+    get_lemmas_dictionary,
+    tsne_dim_reduction,
+    umap_dim_reduction,
+)
 from tqdm import tqdm
 from umap import UMAP
 
@@ -26,8 +31,9 @@ class ModelOptimizer:
         lda_iterations: int = 100,
         random_state: Optional[int] = None,
     ):
-        self.data = df.loc[(df[list(column_filter)] == pd.Series(column_filter)).all(axis=1)]
         self.column_filter = column_filter
+        self.random_state = random_state
+        self.data = df.loc[(df[list(column_filter)] == pd.Series(column_filter)).all(axis=1)]
         self.filtered_lemmas = get_filtered_lemmas(df, words_to_remove)
         self.lemmas_dictionary = get_lemmas_dictionary(self.filtered_lemmas)
         self.encoded_docs = self.filtered_lemmas.apply(self.lemmas_dictionary.doc2bow)
@@ -40,7 +46,6 @@ class ModelOptimizer:
     @property
     def best_model(self):
         return self.models[self.topics_num]
-
 
     def get_topics_df(self, num_words: int = 10) -> pd.DataFrame:
         topics = self.best_model.show_topics(formatted=False, num_words=num_words)
@@ -74,32 +79,83 @@ class ModelOptimizer:
             if df_tmp.shape[0] != rows_by_column:
                 warnings.warn(f"{column} - {column_val} has missing rows!")
                 continue
-            result.append(df_tmp.iloc[:, -self.topics_num:].values.flatten())
+            result.append(df_tmp.iloc[:, -self.topics_num :].values.flatten())
             column_vals_added.append(column_val)
         res = pd.DataFrame(np.vstack(result), index=column_vals_added)
         res.index.name = column
         return res
-    
-    def get_mappings(self, type: str, column: str = "country"):
-        topics_by_country = self.get_topic_probs_averaged_over_column(column)
-        if type=="tsne":
-            mappings = tsne_dim_reduction(topics_by_country, ) 
 
+    def get_tsne_mapping(
+        self,
+        column: str = "country",
+        perplexity: int = 40,
+        n_iter: int = 1000,
+        init: str = "pca",
+        learning_rate: Union[str, float] = "auto",
+    ):
+        topics_by_country = self.get_topic_probs_averaged_over_column(column)
+        mapping = tsne_dim_reduction(
+            topics_by_country, self.random_state, perplexity, n_iter, init, learning_rate
+        )
+        return mapping
+
+    def get_umap_mapping(
+        self,
+        column: str = "country",
+        n_neighbors: int = 7,
+        metric: str = "euclidean",
+        min_dist: float = 0.1,
+        learning_rate: float = 1,
+    ):
+        topics_by_country = self.get_topic_probs_averaged_over_column(column)
+        mapping = umap_dim_reduction(
+            topics_by_country,
+            self.random_state,
+            n_neighbors,
+            metric,
+            min_dist,
+            learning_rate,
+        )
+        return mapping
 
     def save(self):
         filter_name = "_".join([value.replace(" ", "_") for value in self.column_filter.values()])
-        self.encoded_docs.to_csv(str(self.alpha) + "_" + filter_name +"_encoded_docs.csv")
-        self.lemmas_dictionary.save(str(self.alpha) + "_" + filter_name +"_dictionary.dict")
-        self.best_model.save(str(self.alpha) + "_" + filter_name +"_lda_model.model")
-## todo topics words
+        self.encoded_docs.to_csv(str(self.alpha) + "_" + filter_name + "_encoded_docs.csv")
+        self.lemmas_dictionary.save(str(self.alpha) + "_" + filter_name + "_dictionary.dict")
+        self.best_model.save(str(self.alpha) + "_" + filter_name + "_lda_model.model")
 
-def save_data_for_app(model: ModelOptimizer, num_words: int = 10, column: str = "country"):
+
+def save_data_for_app(
+    model: ModelOptimizer,
+    num_words: int = 10,
+    column: str = "country",
+    n_neighbors: int = 7,
+    metric: str = "euclidean",
+    min_dist: float = 0.1,
+    learning_rate: float = 1,
+):
     filter_name = "_".join([value.replace(" ", "_") for value in model.column_filter.values()])
     topic_words = model.get_topics_df(num_words)
     topics_by_country = model.get_topic_probs_averaged_over_column(column)
     model.save()
-    topic_words.save(str(model.alpha) + "_" + filter_name +"_topic_words.csv")
-    topics_by_country.save(str(model.alpha) + "_" + filter_name +"_probs.csv")
+    topic_words.save(str(model.alpha) + "_" + filter_name + "_topic_words.csv")
+    topics_by_country.save(str(model.alpha) + "_" + filter_name + "_probs.csv")
+    tsne_mapping = model.get_tsne_mapping(
+        column,
+        n_neighbors,
+        metric,
+        min_dist,
+        learning_rate,
+    )
+    umap_mapping = model.get_umap_mapping(
+        column,
+        n_neighbors,
+        metric,
+        min_dist,
+        learning_rate,
+    )
+    mappings = tsne_mapping.join(umap_mapping)
+    mappings.to_csv(str(model.alpha) + "_" + filter_name +"_mapping.csv")
 
 
 def get_best_topics_num(cvs: Dict[int, float]) -> int:
@@ -134,6 +190,8 @@ def get_coherences(
     coherence: str = "c_v",
 ) -> Dict[int, float]:
     return {
-        num_topics: CoherenceModel(model, texts=texts, dictionary=dictionary, coherence=coherence).get_coherence()
+        num_topics: CoherenceModel(
+            model, texts=texts, dictionary=dictionary, coherence=coherence
+        ).get_coherence()
         for num_topics, model in tqdm(models.items())
     }
