@@ -26,17 +26,13 @@ def check_coherence_for_topics_num(
     filtered_lemmas = get_filtered_lemmas(df, filter_dict, common_words_filtered)
     lemmas_dictionary = get_lemmas_dictionary(filtered_lemmas)
     encoded_docs = filtered_lemmas.apply(lemmas_dictionary.doc2bow)
-    models = get_lda_models(
-        encoded_docs, topic_numbers_range, passes, iterations, alpha, random_state
-    )
+    models = get_lda_models(encoded_docs, topic_numbers_range, passes, iterations, alpha, random_state)
     cvs = get_coherences(models, filtered_lemmas, lemmas_dictionary)
     if coherence_file:
-        umass = get_coherences(models, filtered_lemmas, lemmas_dictionary, coherence = "u_mass")
-        pd.DataFrame({
-            "topic_num": range(*topic_numbers_range),
-            "c_v": cvs,
-            "u_mass": umass 
-        }).to_csv(coherence_file + ".csv")
+        umass = get_coherences(models, filtered_lemmas, lemmas_dictionary, coherence="u_mass")
+        pd.DataFrame({"topic_num": range(*topic_numbers_range), "c_v": cvs, "u_mass": umass}).to_csv(
+            coherence_file + ".csv"
+        )
     return (
         filtered_lemmas,
         models,
@@ -48,12 +44,9 @@ def check_coherence_for_topics_num(
 
 def get_filtered_lemmas(
     df: pd.DataFrame,
-    filter_dict: Dict[str, str],
     common_words_filtered: List[str],
 ) -> pd.Series:
-    filtered_lemmas = df.loc[(df[list(filter_dict)] == pd.Series(filter_dict)).all(axis=1)][
-        "lemmas"
-    ].copy()
+    filtered_lemmas = df["lemmas"].copy()
     filtered_lemmas = filtered_lemmas.apply(
         lambda doc: [lemma for lemma in doc if not (lemma in common_words_filtered)]
     )
@@ -63,40 +56,9 @@ def get_filtered_lemmas(
 def get_lemmas_dictionary(filtered_lemmas: pd.Series):
     lemmas_dictionary = Dictionary(filtered_lemmas)
     lemmas_dictionary.filter_extremes(no_below=4, no_above=1)
+    lemmas_dictionary.filter_extremes()
     return lemmas_dictionary
 
-
-def get_lda_models(
-    corpus: Union[pd.Series, List[List[str]]],
-    topic_numbers_range: Tuple[int, int] = (2, 11),
-    passes: int = 8,
-    iterations: int = 100,
-    alpha: Union[float, str] = "symmetric",
-    random_state: Optional[int] = None,
-) -> List[LdaMulticore]:
-    return [
-        LdaMulticore(
-            corpus,
-            num_topics=topic_numbers,
-            passes=passes,
-            iterations=iterations,
-            random_state=random_state,
-            alpha=alpha,
-        )
-        for topic_numbers in tqdm(range(*topic_numbers_range))
-    ]
-
-
-def get_coherences(
-    models: List[LdaMulticore],
-    texts: Union[pd.Series, List[List[str]]],
-    dictionary: Dictionary,
-    coherence: str = "c_v",
-) -> List[float]:
-    return [
-        CoherenceModel(model, texts=texts, dictionary=dictionary, coherence=coherence).get_coherence()
-        for model in tqdm(models)
-    ]
 
 
 def _topics_df(model: LdaModel, docs: pd.Series, num_words: int = 10) -> pd.DataFrame:

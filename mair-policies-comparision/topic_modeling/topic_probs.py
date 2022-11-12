@@ -9,25 +9,6 @@ from gensim.corpora.dictionary import Dictionary
 from gensim.models import LdaModel
 
 
-def get_topic_probs(
-    df: pd.DataFrame,
-    filter_dict: Dict[str, str],
-    model: LdaModel,
-    num_topics: int,
-    encoded_docs: pd.Series,
-) -> Tuple[pd.DataFrame, pd.DataFrame]:
-    corpus_model = model[encoded_docs]
-    df_metainfo = df.loc[(df[list(filter_dict)] == pd.Series(filter_dict)).all(axis=1)]
-    res_len = len(df_metainfo)
-    res = np.zeros((res_len, num_topics))
-    for i, doc in enumerate(corpus_model):
-        for topic in doc:
-            res[i][topic[0]] = np.round(topic[1], 4)
-    modeling_results = pd.concat([df_metainfo.reset_index(drop=True), pd.DataFrame(res)], axis=1)
-    topic_probs = modeling_results.groupby("country").mean().loc[:, np.arange(num_topics)]
-
-    return modeling_results, topic_probs
-
 
 def calculate_linkage_matrix(
     topic_probs: pd.DataFrame, method: str = "average", metric: str = "ir"
@@ -83,25 +64,6 @@ def shift_similarity(
                 1 - (np.sqrt(np.sum((np.sqrt(p) - np.sqrt(q)) ** 2)) / np.sqrt(2))
             )
     return pd.DataFrame(dimension_change)
-
-
-def topic_probs_by_column_binded(
-    modeling_results: pd.DataFrame, num_topics: int, column: str = "country"
-) -> pd.DataFrame:
-    result = []
-    column_vals_added = []
-    column_vals = modeling_results[column].unique()
-    rows_by_column = modeling_results.groupby(column).count()[0].max()
-    for column_val in column_vals:
-        df_tmp = modeling_results[modeling_results[column] == column_val]
-        if df_tmp.shape[0] != rows_by_column:
-            warnings.warn(f"{column} - {column_val} has missing rows!")
-            continue
-        result.append(df_tmp.iloc[:, -num_topics:].values.flatten())
-        column_vals_added.append(column_val)
-    res = pd.DataFrame(np.vstack(result), index=column_vals_added)
-    res.index.name = column
-    return res
 
 
 def get_hierarchical_clusters(linkage: np.ndarray, t: float = 1.0, criterion: str = "distance"):
