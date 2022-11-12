@@ -130,7 +130,7 @@ def tsne_dim_reduction(
     tsne_raw_result = tsne.fit_transform(result_df.iloc[:, -num_topics:])
     tsne_result_df["c1"] = tsne_raw_result[:, 0]
     tsne_result_df["c2"] = tsne_raw_result[:, 1]
-    return tsne_result_df
+    return tsne_result_df[["c1", "c2"]]
 
 
 def umap_dim_reduction(
@@ -151,6 +151,6 @@ def umap_dim_reduction(
         random_state=random_state,
     )
     umap_raw_result = umap.fit_transform(result_df.iloc[:, -num_topics:])
-    umap_result_df["c1"] = umap_raw_result[:, 0]
-    umap_result_df["c2"] = umap_raw_result[:, 1]
-    return umap_result_df
+    umap_result_df["u1"] = umap_raw_result[:, 0]
+    umap_result_df["u2"] = umap_raw_result[:, 1]
+    return umap_result_df[["u1", "u2"]]
