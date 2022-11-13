@@ -33,15 +33,18 @@ class ModelOptimizer:
     ):
         self.column_filter = column_filter
         self.random_state = random_state
+        self.lda_alpha = lda_alpha
+        self.lda_passes = lda_passes
+        self.lda_iterations = lda_iterations
         self.data = df.loc[(df[list(column_filter)] == pd.Series(column_filter)).all(axis=1)]
-        self.filtered_lemmas = get_filtered_lemmas(df, words_to_remove)
+        self.filtered_lemmas = get_filtered_lemmas(self.data, words_to_remove)
         self.lemmas_dictionary = get_lemmas_dictionary(self.filtered_lemmas)
         self.encoded_docs = self.filtered_lemmas.apply(self.lemmas_dictionary.doc2bow)
         self.models = get_lda_models(
             self.encoded_docs, topic_numbers_range, lda_passes, lda_iterations, lda_alpha, random_state
         )
         self.cvs = get_coherences(self.models, self.filtered_lemmas, self.lemmas_dictionary)
-        self.topics_num = get_best_topics_num(self.cvs, topic_numbers_range)
+        self.topics_num = get_best_topics_num(self.cvs)
 
     @property
     def best_model(self):
@@ -138,8 +141,8 @@ def save_data_for_app(
     topic_words = model.get_topics_df(num_words)
     topics_by_country = model.get_topic_probs_averaged_over_column(column)
     model.save()
-    topic_words.save(str(model.alpha) + "_" + filter_name + "_topic_words.csv")
-    topics_by_country.save(str(model.alpha) + "_" + filter_name + "_probs.csv")
+    topic_words.save(str(model.lda_alpha) + "_" + filter_name + "_topic_words.csv")
+    topics_by_country.save(str(model.lda_alpha) + "_" + filter_name + "_probs.csv")
     tsne_mapping = model.get_tsne_mapping(
         column,
         n_neighbors,
@@ -155,7 +158,7 @@ def save_data_for_app(
         learning_rate,
     )
     mappings = tsne_mapping.join(umap_mapping)
-    mappings.to_csv(str(model.alpha) + "_" + filter_name +"_mapping.csv")
+    mappings.to_csv(str(model.lda_alpha) + "_" + filter_name +"_mapping.csv")
 
 
 def get_best_topics_num(cvs: Dict[int, float]) -> int:
