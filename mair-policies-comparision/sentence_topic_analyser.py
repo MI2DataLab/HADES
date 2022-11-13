@@ -17,11 +17,12 @@ class SentenceTopicAnalyser():
 
 
     def process_documents(self, documents: List[Iterable[Token]], top_sents = 3):
+        results = []
         for doc in documents:
-            doc_sent_topics = self.calculate_sentences_topics_distribution(doc)
-            for sent, distr in doc_sent_topics:
-                doc_sent_topics
-    
+            doc_sent_topics = self.get_sentences_from_topics(doc,top_sents)
+            results.append(doc_sent_topics)
+        return results
+            
 
     def calculate_sentences_topics_distribution(self, tokens: Iterable[Token]) -> List[Tuple[str, List[str], List[float]]]:
         sentence_to_words_topics=defaultdict(list)
