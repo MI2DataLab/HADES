@@ -4,13 +4,20 @@ from typing import Dict, List, Optional, Tuple
 
 import pandas as pd
 import spacy
+from spacy.tokens import Doc, Token
 from PyPDF2 import PdfFileReader
-
 
 def process_tokens(
     doc: pd.Series, nlp: spacy.language.Language, stop_words: List[str]
-) -> List[str]:
+) -> List[Token]:
     spacy_text = nlp(doc)
+    return [
+        token
+        for token in spacy_text
+        if not any([token.is_stop, token.is_punct, token.lemma_.lower() in stop_words, not token.is_alpha])
+    ]
+
+def get_filtered_tokens(spacy_text: Doc, stop_words: List[str]) -> List[Token]:
     return [
         token
         for token in spacy_text

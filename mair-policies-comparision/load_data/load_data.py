@@ -1,12 +1,13 @@
 import os
 from typing import List
+import joblib
 
 import pandas as pd
 import pycountry
 import spacy
 from gensim.models import Phrases
 
-from .utils import _multiply_ngrams, process_lemmas, process_tokens
+from .utils import _multiply_ngrams, get_filtered_tokens, process_lemmas, process_tokens
 
 
 def read_txt(path: str) -> str:
@@ -28,28 +29,41 @@ def load_processed_data(
     text_path_col: str = "text_path",
     stop_words: List = [],
     spacy_model: str = "en_core_web_lg",
-    processed_filename: str = "data_processed.csv",
+    processed_filename: str = "data_processed.joblib",
     data_filename: str = "data.csv",
 ) -> pd.DataFrame:
     processed_path = data_path + processed_filename
     data_path = data_path + data_filename
     if os.path.isfile(processed_path):
-        processed_data = pd.read_csv(processed_path, index_col=0)
+        processed_data = read_processed_data(processed_path)
     else:
-        processed_data = process_text(load_dataframe(data_path, text_path_col), stop_words, spacy_model)
-        processed_data.to_csv(processed_path)
+        processed_data = preprocess_text(load_dataframe(data_path, text_path_col), spacy_model)
+        save_processed_data(processed_data, processed_path)
+    processed_data = process_text(processed_data, stop_words)
     return processed_data
+
+
+def save_processed_data(processed_data: pd.DataFrame, processed_path: str):
+    joblib.dump(processed_data, processed_path)
+
+
+def read_processed_data(processed_path: str) -> pd.DataFrame:
+    return joblib.load(processed_path)
+
+
+def preprocess_text(docs: pd.DataFrame, spacy_model: str = "en_core_web_lg") -> pd.DataFrame:
+    nlp = spacy.load(spacy_model)
+    df = docs.copy()
+    df["doc"] = df["text"].apply(nlp)
+    return df
 
 
 def process_text(
     docs: pd.DataFrame,
     stop_words: List = [],
-    spacy_model: str = "en_core_web_lg",
 ) -> pd.DataFrame:
-    nlp = spacy.load(spacy_model)
     df = docs.copy()
-
-    df["tokens"] = df["text"].apply(process_tokens, args=(nlp, stop_words))
+    df["tokens"] = df["doc"].apply(get_filtered_tokens, args=(stop_words,))
     df["lemmas"] = df["tokens"].apply(process_lemmas)
     ngram_data = df["tokens"].apply(lambda doc: [token.lemma_.lower() for token in doc])
 
