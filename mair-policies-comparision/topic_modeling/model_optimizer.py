@@ -121,11 +121,11 @@ class ModelOptimizer:
         )
         return mapping
 
-    def save(self):
+    def save(self, path: str = ""):
         filter_name = "_".join([value.replace(" ", "_") for value in self.column_filter.values()])
-        self.encoded_docs.to_csv(str(self.lda_alpha) + "_" + filter_name + "_encoded_docs.csv")
-        self.lemmas_dictionary.save(str(self.lda_alpha) + "_" + filter_name + "_dictionary.dict")
-        self.best_model.save(str(self.lda_alpha) + "_" + filter_name + "_lda_model.model")
+        self.encoded_docs.to_csv(path + str(self.lda_alpha) + "_" + filter_name + "_encoded_docs.csv")
+        self.lemmas_dictionary.save(path + str(self.lda_alpha) + "_" + filter_name + "_dictionary.dict")
+        self.best_model.save(path + str(self.lda_alpha) + "_" + filter_name + "_lda_model.model")
 
 
 def save_data_for_app(
@@ -140,13 +140,14 @@ def save_data_for_app(
     metric: str = "euclidean",
     min_dist: float = 0.1,
     learning_rate_umap: float = 1,
+    path: str = "",
 ):
     filter_name = "_".join([value.replace(" ", "_") for value in model.column_filter.values()])
     topic_words = model.get_topics_df(num_words)
     topics_by_country = model.get_topic_probs_averaged_over_column(column)
-    model.save()
-    topic_words.to_csv(str(model.lda_alpha) + "_" + filter_name + "_topic_words.csv")
-    topics_by_country.to_csv(str(model.lda_alpha) + "_" + filter_name + "_probs.csv")
+    model.save(path=path)
+    topic_words.to_csv(path + str(model.lda_alpha) + "_" + filter_name + "_topic_words.csv")
+    topics_by_country.to_csv(path + str(model.lda_alpha) + "_" + filter_name + "_probs.csv")
     tsne_mapping = model.get_tsne_mapping(
         column,
         perplexity,
@@ -162,7 +163,7 @@ def save_data_for_app(
         learning_rate_umap,
     )
     mappings = tsne_mapping.join(umap_mapping)
-    mappings.to_csv(str(model.lda_alpha) + "_" + filter_name +"_mapping.csv")
+    mappings.to_csv(path + str(model.lda_alpha) + "_" + filter_name + "_mapping.csv")
 
 
 def get_best_topics_num(cvs: Dict[int, float]) -> int:
