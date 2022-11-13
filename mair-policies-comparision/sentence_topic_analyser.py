@@ -64,6 +64,6 @@ def get_top_sents(sentences_topics_distribution: List[Tuple[str, Tuple[str, List
         sent_to_topics[sent]=distrs.mean(axis=0)
         sent_to_words_weights[sent]={word: distrs[i][topic_id] for i, word in enumerate(words)}
     sent_to_topic_weight = [(sent, probs[topic_id]) for sent, probs in sent_to_topics.items()]
-    best_sents = sorted(sent_to_topic_weight, reverse=True)[:top_sents]
-    words = {word:weight for sent in best_sents for word, weight in sent_to_words_weights[sent[0]].item()}
+    best_sents = sorted(sent_to_topic_weight, reverse=True, key=lambda x: x[1])[:top_sents]
+    words = {word:weight for sent in best_sents for word, weight in sent_to_words_weights[sent[0]].items()}
     return best_sents, words
