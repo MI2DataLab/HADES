@@ -8,7 +8,7 @@ from PyPDF2 import PdfFileReader
 
 
 def process_tokens(
-    doc: pd.Series, nlp: spacy.language.Language, stop_words: List[str]
+        doc: pd.Series, nlp: spacy.language.Language, stop_words: List[str]
 ) -> List[str]:
     spacy_text = nlp(doc)
     return [
@@ -44,7 +44,7 @@ def get_table_of_contents(path: str, toc: str = "Table of Contents") -> Tuple[st
 
 
 def get_paragraphs_df(
-    toc: str, pages_shift: int, paragraphs_names: Dict[str, List[str]], end_paragraph: str
+        toc: str, pages_shift: int, paragraphs_names: Dict[str, List[str]], end_paragraph: str
 ) -> pd.DataFrame:
     lines = toc.split("\n")
     rows = {"paragraph": [], "start_page": [], "end_page": [], "start_text": [], "end_text": []}
@@ -56,14 +56,14 @@ def get_paragraphs_df(
             paragraph_line = paragraph_line[0]
             try:
                 start_page = (
-                    int(
-                        re.sub(
-                            "[^0-9]+",
-                            "",
-                            paragraph_line[paragraph_line.find(paragraph) + len(paragraph) :],
+                        int(
+                            re.sub(
+                                "[^0-9]+",
+                                "",
+                                paragraph_line[paragraph_line.find(paragraph) + len(paragraph):],
+                            )
                         )
-                    )
-                    + pages_shift
+                        + pages_shift
                 )
             except:
                 break
@@ -116,12 +116,12 @@ def read_paragraphs(df: pd.DataFrame, path: str, country: str, root: str = "") -
 
 
 def process_all_documents(
-    directory_path: str,
-    paragraphs_names: Dict[str, List[str]],
-    save_txt: str,
-    end_paragraph: str,
-    toc_str: str = "Table of Contents",
-    pages_shift: Optional[int] = None,
+        directory_path: str,
+        paragraphs_names: Dict[str, List[str]],
+        save_txt: str,
+        end_paragraph: str,
+        toc_str: str = "Table of Contents",
+        pages_shift: Optional[int] = None,
 ) -> pd.DataFrame:
     """Process documents from directory_path with
     table of contents with paragraph names and pages
@@ -150,3 +150,29 @@ def process_all_documents(
         doc_df = read_paragraphs(paragraphs_df, directory_path + "/" + doc, doc[:-4], save_txt)
         df = pd.concat([df, doc_df], ignore_index=True)
     return df
+
+
+def text_cleaning(text):
+    # deleting URLs
+    text = re.sub(r'\w+:\/{2}[\d\w-]+(\.[\d\w-]+)*(?:(?:\/[^\s/]*))*', '', text, flags=re.MULTILINE)
+    # deleting headlines
+    text = re.sub(r'((\d\.)+\d) +[A-Z]([a-z]|\s|,)+', '', text)
+    # deleting random numbers
+    text = re.sub(r'((\d)+ +)+\(\d+\)', '', text)
+    # deleting picture descriptions
+    text = re.sub(r' \d+ [A-Z](\w|\s|,)+.', '', text)
+    # deleting tables
+    sentences = text.split('. ')
+    to_delete = False
+    sentences_copy = sentences.copy()
+    for i, sentence in enumerate(sentences):
+        if to_delete:
+            to_delete = False
+            sentences_copy[i] = ''
+        if re.match(r'\s+Table \d+', sentence):
+            to_delete = True
+            sentences_copy[i] = ''
+    text = ' '.join(sentences_copy)
+    # deleting multiple spaces
+    text = re.sub(r'\s{2,}', ' ', text)
+    return text
