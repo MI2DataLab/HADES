@@ -172,7 +172,8 @@ def text_cleaning(text):
         if re.match(r'\s+Table \d+', sentence):
             to_delete = True
             sentences_copy[i] = ''
-    text = ' '.join(sentences_copy)
+    text = '. '.join(sentences_copy)
     # deleting multiple spaces
     text = re.sub(r'\s{2,}', ' ', text)
+    text = re.sub(r' . ', '', text)
     return text
