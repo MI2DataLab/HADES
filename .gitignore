@@ -134,3 +134,7 @@ social_results/
 # MacOS hidden files
 *.DS_Store
 mair-policies-comparision/documents.csv
+mair-policies-comparision/necp_results/*
+mair-policies-comparision/social_results/*
+mair-policies-comparision/necp_reports/data_processed.joblib
+mair-policies-comparision/social_reports/data_processed.joblib
