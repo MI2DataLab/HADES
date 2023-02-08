@@ -43,7 +43,10 @@ def get_table_of_contents(path: str, toc: str = "Table of Contents") -> Tuple[st
     text = ""
     toc_page = 0
     while not toc in text:
-        pageObj = fileReader.getPage(toc_page)
+        try:
+            pageObj = fileReader.getPage(toc_page)
+        except:
+            return "", -1
         text = pageObj.extractText()
         toc_page += 1
     file.close()
@@ -57,30 +60,41 @@ def get_paragraphs_df(
     rows = {"paragraph": [], "start_page": [], "end_page": [], "start_text": [], "end_text": []}
     for key, paragraphs in paragraphs_names.items():
         for paragraph in paragraphs:
-            paragraph_line = [line for line in lines if paragraph in line]
+            paragaph_without_spaces = paragraph.replace(" ", "")
+            paragraph_line = [line.replace(" ", "") for line in lines if paragaph_without_spaces in line.replace(" ", "")]
             if len(paragraph_line) == 0:
                 continue
             paragraph_line = paragraph_line[0]
+            paragraph_line_without_spaces = paragraph_line.replace(" ", "")
+            paragaph_without_spaces = paragraph.replace(" ", "")
             try:
-                start_page = (
-                    int(
-                        re.sub(
+                page_str = re.sub(
                             "[^0-9]+",
                             "",
-                            paragraph_line[paragraph_line.find(paragraph) + len(paragraph) :],
+                            paragraph_line_without_spaces[paragraph_line_without_spaces.find(paragraph) + len(paragraph) :],
                         )
+                if page_str == '':
+                    page_str = 999
+                start_page = (
+                    int(
+                        page_str
                     )
                     + pages_shift
                 )
-            except:
-                break
+            except Exception as e:
+                continue
             if len(rows["start_page"]) > 0:
                 rows["end_page"].append(start_page)
-                rows["end_text"].append(paragraph)
+                rows["end_text"].append(paragraph if page_str!=999 else None)
             if key != end_paragraph:
                 rows["paragraph"].append(key)
                 rows["start_page"].append(start_page)
                 rows["start_text"].append(paragraph)
+            else:
+                break
+    if len({len(i) for i in rows.values()}) != 1:
+        rows["end_page"].append(999)
+        rows["end_text"].append(None)
     return pd.DataFrame(rows)
 
 
@@ -90,22 +104,30 @@ def read_pages_from_pdf(path: str, start_page: int, end_page: int) -> str:
     text = ""
     count = start_page - 1
     while count < end_page:
-        pageObj = fileReader.getPage(count)
-        count += 1
-        text += pageObj.extractText().replace("\n", "")
+        try:
+            pageObj = fileReader.getPage(count)
+            count += 1
+            text += pageObj.extractText().replace("\n", "")
+        except IndexError:
+            break
     return text
 
 
 def read_paragraphs(df: pd.DataFrame, path: str, country: str, root: str = "") -> pd.DataFrame:
     result_dict = {"paragraph": [], "country": [], "text_path": []}
     for i, row in df.iterrows():
-        txt_destination = f"{root}{country}_{row.paragraph}.txt"
+        file_name = row.paragraph.replace(":","").replace(" ","_").replace(",","").replace("/","_").replace("(","").replace(")","").replace("&","").replace("-","_").replace("__","_").lower()
+        txt_destination = f"{root}{country}_{file_name}.txt"
         if row.start_page is None:
             text = ""
         else:
             start_page = row.start_page
             end_page = row.end_page
-            text = read_pages_from_pdf(path, start_page, end_page)
+            for i in [0, -1, 1, 2]:
+                start_page = row.start_page + i
+                text = read_pages_from_pdf(path, start_page, end_page)
+                if text != "":
+                    break
             if row.start_text is not None:
                 try:
                     text = row.start_text + text.split(row.start_text, 1)[1]
