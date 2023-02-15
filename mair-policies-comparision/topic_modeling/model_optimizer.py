@@ -29,6 +29,7 @@ class ModelOptimizer:
         lda_alpha: Union[float, str] = "symmetric",
         lda_passes: int = 8,
         lda_iterations: int = 100,
+        coherence_measure: str = "c_v",
         random_state: Optional[int] = None,
     ):
         self.column_filter = column_filter
@@ -36,6 +37,7 @@ class ModelOptimizer:
         self.lda_alpha = lda_alpha
         self.lda_passes = lda_passes
         self.lda_iterations = lda_iterations
+        self.coherence_measure = coherence_measure
         self.data = df.loc[(df[list(column_filter)] == pd.Series(column_filter)).all(axis=1)]
         self.filtered_lemmas = get_filtered_lemmas(self.data, words_to_remove)
         self.lemmas_dictionary = get_lemmas_dictionary(self.filtered_lemmas)
@@ -43,7 +45,7 @@ class ModelOptimizer:
         self.models = get_lda_models(
             self.encoded_docs, topic_numbers_range, lda_passes, lda_iterations, lda_alpha, random_state
         )
-        self.cvs = get_coherences(self.models, self.filtered_lemmas, self.lemmas_dictionary)
+        self.cvs = get_coherences(self.models, self.filtered_lemmas, self.lemmas_dictionary, self.coherence_measure)
         self.topics_num = get_best_topics_num(self.cvs)
 
     @property
