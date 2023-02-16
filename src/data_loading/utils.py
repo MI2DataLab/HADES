@@ -1,7 +1,7 @@
 import os
 import re
 from typing import Dict, List, Optional, Tuple
-from src.data_preprocessing.data_cleaning import text_cleaning
+from data_preprocessing.data_cleaning import text_cleaning
 import pandas as pd
 import spacy
 from spacy.tokens import Doc, Token
