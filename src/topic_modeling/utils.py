@@ -73,12 +73,13 @@ def _topics_df(model: LdaModel, docs: pd.Series, num_words: int = 10) -> pd.Data
 def tsne_dim_reduction(
     result_df: pd.DataFrame,
     random_state: int = 42,
-    perplexity: int = 40,
+    perplexity: int = 10,
     n_iter: int = 1000,
     init: str = "pca",
     learning_rate: Union[str, float] = "auto",
 ) -> pd.DataFrame:
     tsne_result_df = result_df.copy()
+    perplexity = min(perplexity, result_df.shape[0] - 1)
     tsne = TSNE(
         n_components=2,
         verbose=1,
