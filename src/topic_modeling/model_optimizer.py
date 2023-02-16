@@ -17,6 +17,9 @@ from topic_modeling.utils import (
 )
 from tqdm import tqdm
 from umap import UMAP
+from pyLDAvis import prepared_data_to_html
+
+from plots.topics import interactive_exploration
 
 
 class ModelOptimizer:
@@ -134,7 +137,7 @@ def save_data_for_app(
     model: ModelOptimizer,
     num_words: int = 10,
     column: str = "country",
-    perplexity: int = 40,
+    perplexity: int = 10,
     n_iter: int = 1000,
     init: str = "pca",
     learning_rate_tsne: Union[str, float] = "auto",
@@ -166,6 +169,10 @@ def save_data_for_app(
     )
     mappings = tsne_mapping.join(umap_mapping)
     mappings.to_csv(path + str(model.lda_alpha) + "_" + filter_name + "_mapping.csv")
+    vis = interactive_exploration(model.best_model, model.encoded_docs, model.lemmas_dictionary)
+    vis_html_string = prepared_data_to_html(vis)
+    with open(path + str(model.lda_alpha) + "_" + filter_name + "_vis.txt", "w") as text_file:
+        text_file.write(vis_html_string)
 
 
 def get_best_topics_num(cvs: Dict[int, float]) -> int:
