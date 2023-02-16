@@ -1,11 +1,11 @@
 [tool.poetry]
-name = "mair-policies-comparision"
+name = "mair-policies-comparison"
 version = "0.1.0"
 description = ""
 authors = ["arturzolkowski <artur.zolkowski@wp.pl>"]
 packages = [
-    { include = "mair-policies-comparision", from="."},
-    { include = "mair-policies-comparision/**/*.py", from="."},
+    { include = "src", from="."},
+    { include = "src/**/*.py", from="."},
 ]
 
 [tool.poetry.dependencies]
@@ -26,6 +26,7 @@ hdbscan = "^0.8.28"
 pycountry = "^22.3.5"
 statsmodels = "^0.13.2"
 openai = "^0.23.0"
+umap-learn = "^0.5.3"
 
 [tool.poetry.dev-dependencies]
 streamlit = "^1.11.1"
