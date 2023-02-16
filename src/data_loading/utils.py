@@ -8,8 +8,8 @@ from spacy.tokens import Doc, Token
 from PyPDF2 import PdfReader
 
 def process_tokens(
-    doc: pd.Series, nlp: spacy.language.Language, stop_words: List[str]
-) -> List[Token]:
+        doc: pd.Series, nlp: spacy.language.Language, stop_words: List[str]
+) -> List[str]:
     spacy_text = nlp(doc)
     return [
         token
@@ -55,7 +55,7 @@ def get_table_of_contents(path: str, toc: str = "Table of Contents") -> Tuple[st
 
 
 def get_paragraphs_df(
-    toc: str, pages_shift: int, paragraphs_names: Dict[str, List[str]], end_paragraph: str
+        toc: str, pages_shift: int, paragraphs_names: Dict[str, List[str]], end_paragraph: str
 ) -> pd.DataFrame:
     lines = toc.split("\n")
     rows = {"paragraph": [], "start_page": [], "end_page": [], "start_text": [], "end_text": []}
@@ -69,24 +69,21 @@ def get_paragraphs_df(
             paragraph_line_without_spaces = paragraph_line.replace(" ", "")
             paragaph_without_spaces = paragraph.replace(" ", "")
             try:
-                page_str = re.sub(
-                            "[^0-9]+",
-                            "",
-                            paragraph_line_without_spaces[paragraph_line_without_spaces.find(paragraph) + len(paragraph) :],
-                        )
-                if page_str == '':
-                    page_str = 999
                 start_page = (
-                    int(
-                        page_str
-                    )
-                    + pages_shift
+                        int(
+                            re.sub(
+                                "[^0-9]+",
+                                "",
+                                paragraph_line[paragraph_line.find(paragraph) + len(paragraph):],
+                            )
+                        )
+                        + pages_shift
                 )
             except Exception as e:
                 continue
             if len(rows["start_page"]) > 0:
                 rows["end_page"].append(start_page)
-                rows["end_text"].append(paragraph if page_str!=999 else None)
+                rows["end_text"].append(paragraph if start_page!=999 else None)
             if key != end_paragraph:
                 rows["paragraph"].append(key)
                 rows["start_page"].append(start_page)
@@ -147,12 +144,12 @@ def read_paragraphs(df: pd.DataFrame, path: str, country: str, root: str = "") -
 
 
 def process_all_documents(
-    directory_path: str,
-    paragraphs_names: Dict[str, List[str]],
-    save_txt: str,
-    end_paragraph: str,
-    toc_str: str = "Table of Contents",
-    pages_shift: Optional[int] = None,
+        directory_path: str,
+        paragraphs_names: Dict[str, List[str]],
+        save_txt: str,
+        end_paragraph: str,
+        toc_str: str = "Table of Contents",
+        pages_shift: Optional[int] = None,
 ) -> pd.DataFrame:
     """Process documents from directory_path with
     table of contents with paragraph names and pages
@@ -184,3 +181,28 @@ def process_all_documents(
     return df
 
 
+def text_cleaning(text):
+    # deleting URLs
+    text = re.sub(r'\w+:\/{2}[\d\w-]+(\.[\d\w-]+)*(?:(?:\/[^\s/]*))*', '', text, flags=re.MULTILINE)
+    # deleting headlines
+    text = re.sub(r'((\d\.)+\d) +[A-Z]([a-z]|\s|,)+', '', text)
+    # deleting random numbers
+    text = re.sub(r'((\d)+ +)+\(\d+\)', '', text)
+    # deleting picture descriptions
+    text = re.sub(r' \d+ [A-Z](\w|\s|,)+.', '', text)
+    # deleting tables
+    sentences = text.split('. ')
+    to_delete = False
+    sentences_copy = sentences.copy()
+    for i, sentence in enumerate(sentences):
+        if to_delete:
+            to_delete = False
+            sentences_copy[i] = ''
+        if re.match(r'\s+Table \d+', sentence):
+            to_delete = True
+            sentences_copy[i] = ''
+    text = '. '.join(sentences_copy)
+    # deleting multiple spaces
+    text = re.sub(r'\s{2,}', ' ', text)
+    text = re.sub(r' . ', '', text)
+    return text
