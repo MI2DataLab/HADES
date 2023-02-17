@@ -1,8 +1,10 @@
 import string
 import warnings
+import os
 from collections import Counter
 from typing import Dict, List, Optional, Tuple, Union
 
+import openai
 import numpy as np
 import pandas as pd
 from gensim.corpora.dictionary import Dictionary
@@ -17,6 +19,7 @@ from topic_modeling.utils import (
 )
 from tqdm import tqdm
 from umap import UMAP
+from copy import deepcopy
 from pyLDAvis import prepared_data_to_html
 
 from plots.topics import interactive_exploration
@@ -50,6 +53,7 @@ class ModelOptimizer:
         )
         self.cvs = get_coherences(self.models, self.filtered_lemmas, self.lemmas_dictionary, self.coherence_measure)
         self.topics_num = get_best_topics_num(self.cvs)
+        self.topic_names_dict = {i:i for i in range(self.topics_num)}
 
     @property
     def best_model(self):
@@ -58,7 +62,14 @@ class ModelOptimizer:
     def get_topics_df(self, num_words: int = 10) -> pd.DataFrame:
         topics = self.best_model.show_topics(formatted=False, num_words=num_words)
         counter = Counter(self.filtered_lemmas.sum())
-        out = [[word, i, weight, counter[word]] for i, topic in topics for word, weight in topic]
+        id2word_dict = self.lemmas_dictionary
+        out = [[
+            id2word_dict[int(word_id)],
+            topic_id,
+            weight,
+            counter[id2word_dict[int(word_id)]]
+        ]
+        for topic_id, topic in topics for word_id, weight in topic]
         df = pd.DataFrame(out, columns=["word", "topic_id", "importance", "word_count"])
         df = df.sort_values(by=["importance"], ascending=False)
         return df
@@ -75,7 +86,11 @@ class ModelOptimizer:
 
         return modeling_results
 
-    def get_topic_probs_averaged_over_column(self, column: str = "country") -> pd.DataFrame:
+    def get_topic_probs_averaged_over_column(
+            self,
+            column: str = "country",
+            show_names: bool = False,
+    ) -> pd.DataFrame:
         """Returns topic probabilities averaged over given column."""
         modeling_results = self.get_topic_probs_df()
         result = []
@@ -91,6 +106,8 @@ class ModelOptimizer:
             column_vals_added.append(column_val)
         res = pd.DataFrame(np.vstack(result), index=column_vals_added)
         res.index.name = column
+        if show_names:
+            res.columns = [self.topic_names_dict[i] for i in range(self.topics_num)]
         return res
 
     def get_tsne_mapping(
@@ -132,6 +149,35 @@ class ModelOptimizer:
         self.lemmas_dictionary.save(path + str(self.lda_alpha) + "_" + filter_name + "_dictionary.dict")
         self.best_model.save(path + str(self.lda_alpha) + "_" + filter_name + "_lda_model.model")
 
+    def name_topics_automatically_gpt3(
+        self,
+        num_keywords: int = 15,
+        gpt3_model: str = "text-davinci-002",
+        temperature: int = 0.5,
+    ) -> pd.DataFrame:
+        openai.api_key = os.getenv("OPENAI_API_KEY")
+        topics_keywords = self.get_topics_df(num_keywords)
+        for i in range(self.topics_num):
+            keywords = topics_keywords[topics_keywords["topic_id"] == i].word.to_list()
+            weights = topics_keywords[topics_keywords["topic_id"] == i].importance.to_list()
+            prompt = _generate_prompt(keywords, weights)
+            title = _generate_title(prompt, gpt3_model, temperature)
+            self.topic_names_dict[i] = title
+
+    def name_topics_manually(
+        self, topic_names: Union[List[str], Dict[int, str]]
+    ) -> pd.DataFrame:
+        if isinstance(topic_names, list):
+            dict_update = {i:topic_names[i] for i in range(len(topic_names))}
+        if isinstance(topic_names, dict):
+            dict_update = topic_names
+        updated_dict = deepcopy(self.topic_names_dict)
+        updated_dict.update(dict_update)
+        if updated_dict.keys() == self.topic_names_dict.keys():
+            self.topic_names_dict = updated_dict
+        else:
+            warnings.warn("Topic names not updated: incorrect topic names given")
+
 
 def save_data_for_app(
     model: ModelOptimizer,
@@ -149,7 +195,7 @@ def save_data_for_app(
 ):
     filter_name = "_".join([value.replace(" ", "_") for value in model.column_filter.values()])
     topic_words = model.get_topics_df(num_words)
-    topics_by_country = model.get_topic_probs_averaged_over_column(column)
+    topics_by_country = model.get_topic_probs_averaged_over_column(column, show_names=True)
     model.save(path=path)
     topic_words.to_csv(path + str(model.lda_alpha) + "_" + filter_name + "_topic_words.csv")
     topics_by_country.to_csv(path + str(model.lda_alpha) + "_" + filter_name + "_probs.csv")
@@ -212,3 +258,16 @@ def get_coherences(
         ).get_coherence()
         for num_topics, model in tqdm(models.items())
     }
+
+
+def _generate_prompt(keywords: list, weights: list) -> str:
+    keywords_weights = [word + ": " + str(weight) for word, weight in zip(keywords, weights)]
+    return (
+        "Suggest short (maximum three words) name for a topic based on given keywords and their importance: "
+        + ", ".join(keywords_weights)
+    )
+
+
+def _generate_title(prompt: str, gpt3_model: str, temperature: int) -> str:
+    response = openai.Completion.create(model=gpt3_model, prompt=prompt, temperature=temperature)
+    return response.choices[0].text.split("\n")[-1]
