@@ -263,7 +263,7 @@ def get_coherences(
     }
 
 
-def _generate_prompt(keywords: list, weights: list, excluded: list) -> str:
+def _generate_prompt(keywords: list, weights: list, excluded: list = []) -> str:
     keywords_weights = [word + ": " + str(weight) for word, weight in zip(keywords, weights)]
     if len(excluded) > 0:
         excluded_str = f"different than: {', '.join(excluded)} "
