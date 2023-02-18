@@ -9,7 +9,7 @@ packages = [
 ]
 
 [tool.poetry.dependencies]
-python = "^3.9,<3.11"
+python = "^3.9,<3.9.7"
 pandas = "^1.4.3"
 numpy = "^1.23.1"
 spacy = "^3.3.1"
@@ -28,9 +28,10 @@ pycountry = "^22.3.5"
 statsmodels = "^0.13.2"
 openai = "^0.23.0"
 umap-learn = "^0.5.3"
+llvmlite = "0.39.1"
+streamlit = "^1.18.1"
 
 [tool.poetry.dev-dependencies]
-streamlit = "^1.11.1"
 plotly = "^5.9.0"
 
 [tool.black]
