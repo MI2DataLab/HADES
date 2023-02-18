@@ -144,10 +144,11 @@ class ModelOptimizer:
         return mapping
 
     def save(self, path: str = ""):
-        filter_name = "_".join([value.replace(" ", "_") for value in self.column_filter.values()])
-        self.encoded_docs.to_csv(path + str(self.lda_alpha) + "_" + filter_name + "_encoded_docs.csv")
-        self.lemmas_dictionary.save(path + str(self.lda_alpha) + "_" + filter_name + "_dictionary.dict")
-        self.best_model.save(path + str(self.lda_alpha) + "_" + filter_name + "_lda_model.model")
+        filter_name = "_".join([value.replace(":","").replace(" ","_").replace(",","").replace("/","_").replace("(","").replace(")","").replace("&","").replace("-","_")
+                                for value in self.column_filter.values()])
+        self.encoded_docs.to_csv(path + filter_name + "_encoded_docs.csv")
+        self.lemmas_dictionary.save(path + filter_name + "_dictionary.dict")
+        self.best_model.save(path + filter_name + "_lda_model.model")
 
     def name_topics_automatically_gpt3(
         self,
@@ -196,12 +197,13 @@ def save_data_for_app(
     learning_rate_umap: float = 1,
     path: str = "",
 ):
-    filter_name = "_".join([value.replace(" ", "_") for value in model.column_filter.values()])
+    filter_name = "_".join([value.replace(":","").replace(" ","_").replace(",","").replace("/","_").replace("(","").replace(")","").replace("&","").replace("-","_")
+                            for value in model.column_filter.values()])
     topic_words = model.get_topics_df(num_words)
     topics_by_country = model.get_topic_probs_averaged_over_column(column, show_names=True)
     model.save(path=path)
-    topic_words.to_csv(path + str(model.lda_alpha) + "_" + filter_name + "_topic_words.csv")
-    topics_by_country.to_csv(path + str(model.lda_alpha) + "_" + filter_name + "_probs.csv")
+    topic_words.to_csv(path + filter_name + "_topic_words.csv")
+    topics_by_country.to_csv(path + filter_name + "_probs.csv")
     tsne_mapping = model.get_tsne_mapping(
         column,
         perplexity,
@@ -217,10 +219,10 @@ def save_data_for_app(
         learning_rate_umap,
     )
     mappings = tsne_mapping.join(umap_mapping)
-    mappings.to_csv(path + str(model.lda_alpha) + "_" + filter_name + "_mapping.csv")
+    mappings.to_csv(path + filter_name + "_mapping.csv")
     vis = interactive_exploration(model.best_model, model.encoded_docs, model.lemmas_dictionary)
     vis_html_string = prepared_data_to_html(vis)
-    with open(path + str(model.lda_alpha) + "_" + filter_name + "_vis.txt", "w") as text_file:
+    with open(path + filter_name + "_vis.txt", "w") as text_file:
         text_file.write(vis_html_string)
 
 
