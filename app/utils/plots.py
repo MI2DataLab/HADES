@@ -5,7 +5,66 @@ import matplotlib.pyplot as plt
 import plotly.graph_objects as go
 import pycountry
 import seaborn as sns
+from copy import deepcopy
 from matplotlib import colors
+
+
+def plot_map(
+    df_probs,
+    df_mapping,
+    labels,
+    map_scope="europe",
+    lonaxis_range=[-30, 25],
+    lataxis_range=[50, 95],
+):
+    df_probs["country"] = df_probs["country"].astype(str)
+    df_mapping["country"] = df_mapping["country"].astype(str)
+    df = df_probs.merge(df_mapping, on="country")
+    df["label"] = labels
+    df_to_plot = deepcopy(df)
+    iso_alpha3 = df_to_plot["country"].apply(
+        lambda country: pycountry.countries.search_fuzzy(country.split("_")[-1])[
+            0
+        ].alpha_3
+    )
+    colnames = df.columns[:-5].to_list()
+    df_to_plot["iso"] = iso_alpha3
+    fig = px.choropleth(
+        df_to_plot,
+        locations="iso",
+        scope=map_scope,
+        color="label",
+        hover_name="country",
+        hover_data=colnames,
+        projection="azimuthal equal area",
+    )
+    topic_dist_str = [
+        str(colnames[i]) + f": %{{customdata[{i}]:.3f}}"
+        for i in range(1, len(colnames))
+    ]
+    fig.update_traces(
+        hovertemplate="<br>".join(
+            ["<b>%{customdata[0]}</b>", "<i>Topic distribution:</i>"] + topic_dist_str
+        ),
+    )
+    fig.update_geos(
+        fitbounds=False,
+        visible=True,
+        resolution=50,
+        lonaxis_range=lonaxis_range,
+        lataxis_range=lataxis_range,
+        center=dict(lon=10, lat=50),
+    )
+
+    fig.update_layout(
+        height=500,
+        width=1000,
+        margin={"r": 0, "t": 0, "l": 0, "b": 0},
+        paper_bgcolor="rgba(0,0,0,0)",
+        showlegend=False,
+        dragmode=False,
+    )
+    return fig
 
 
 def plot_clusters(
@@ -16,6 +75,7 @@ def plot_clusters(
     y="c2",
     entity_colname="country",
     try_flags=True,
+    text = None
 ):
     df_probs[entity_colname] = df_probs[entity_colname].astype(str)
     df_mapping[entity_colname] = df_mapping[entity_colname].astype(str)
@@ -32,13 +92,23 @@ def plot_clusters(
 
     colnames = df_probs.columns.to_list()
 
-    fig = px.scatter(
-        df,
-        x=x,
-        y=y,
-        color="label",
-        hover_data=colnames,
-    )
+    if try_flags:
+        fig = px.scatter(
+            df,
+            x=x,
+            y=y,
+            color="label",
+            hover_data=colnames,
+        )
+    else:
+        fig = px.scatter(
+            df,
+            x=x,
+            y=y,
+            color="label",
+            hover_data=colnames,
+            text=text,
+        )
 
     topic_dist_str = [
         str(colnames[i]) + f": %{{customdata[{i}]:.3f}}" for i in range(1, len(colnames))
@@ -49,6 +119,7 @@ def plot_clusters(
         hovertemplate="<br>".join(
             ["<b>%{customdata[0]}</b>", "<i>Topic distribution:</i>"] + topic_dist_str
         ),
+        textfont_color="black",
     )
 
     if try_flags:
@@ -173,20 +244,25 @@ def plot_topic_distribution(df, selected_text, entity_colname="country", label="
     return fig
 
 
-def plot_topic_distribution_radar(df, selected_entities, entity_colname="country"):
+def plot_topic_distribution_radar(df, selected_entities, entity_colname="country", app_format=False):
     fig = go.Figure()
-    topic_names = np.hstack((df.columns[1:], df.columns[1]))
+    topic_names = np.hstack(df.columns[1:])
     sub_df = df.loc[df[entity_colname].isin(selected_entities)]
     for i, row in sub_df.iterrows():
-        r = np.hstack((row[1:].values, row.iloc[1]))
+        r = np.hstack(row[1:].values)
         name = row[0]
+        if app_format:
+            theta = ["T" + str(i) for i in range(len(topic_names))]
+        else:
+            theta = topic_names
         fig.add_trace(
             go.Scatterpolar(
                 r=r,
-                theta=topic_names,
+                theta=theta,
                 fill="toself",
                 name=name,
-                hovertemplate="<b>" + name + "</b><br>" + "%{theta}: %{r}",
+                text=topic_names,
+                hovertemplate="<b>" + name + "</b><br>" + "%{text}: %{r}",
             )
         )
 
@@ -198,6 +274,8 @@ def plot_topic_distribution_radar(df, selected_entities, entity_colname="country
                 rangemode="nonnegative",
                 tickfont_size=12,
                 title_text="Topic probability",
+                tickfont_color="black",
+                titlefont_color="black",
             ),
             angularaxis=dict(
                 rotation=90,
@@ -208,7 +286,7 @@ def plot_topic_distribution_radar(df, selected_entities, entity_colname="country
     )
     fig.update_layout(
         margin=dict(l=20, r=20, t=20, b=20),
-        height=500,
+        height=400,
         paper_bgcolor="rgba(0,0,0,0)",
     )
     return fig
@@ -276,7 +354,7 @@ def plot_topics(
     ax_twin.set_ylabel("Word Weight", color=col)
 
     ax1.set_title(f"Topic {topic_ind + 1}: " + topic_name, color=col, fontsize=12)
-    ax1.xaxis.set_ticks(np.arange(30))
+    ax1.xaxis.set_ticks(np.arange(len(topic_keywords.loc[topic_keywords.topic_id == topic_num, "word"])))
     ax1.set_xticklabels(
         topic_keywords.loc[topic_keywords.topic_id == topic_num, "word"],
         rotation=30,
