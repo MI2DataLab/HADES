@@ -1,24 +1,27 @@
 from gensim import models
 from gensim.corpora.dictionary import Dictionary
-from typing import List, Union
+from contextualized_topic_models.models.ctm import CombinedTM
+from contextualized_topic_models.utils.data_preparation import TopicModelDataPreparation
 
+from typing import List, Union
 import pandas as pd
 
 
 class Model:
     def __init__(self, 
                  num_topics: int,
-                 corpus: Union[pd.Series, List[List[str]]],
+                 docs: Union[pd.Series, List[List[str]]],
+                 encoded_docs: Union[pd.Series, List[List[str]]],
                  model_type: str = "lda",
                  random_state: int = 42,
                  **kwargs): 
         self.model_type = model_type
-        self.corpus = corpus
+        self.encoded_docs = encoded_docs
         self.num_topics = num_topics
 
         if self.model_type == "lda":
             self.int_model = models.LdaMulticore(
-                corpus= self.corpus,
+                corpus= self.encoded_docs,
                 num_topics=num_topics,
                 random_state=random_state,
                 passes=kwargs.get("passes", 8),
@@ -27,14 +30,18 @@ class Model:
             )
         elif self.model_type == "nmf":
             self.int_model = models.Nmf(
-                corpus=self.corpus,
+                corpus=self.encoded_docs,
                 num_topics=num_topics,
                 random_state=random_state,
                 passes=kwargs.get("passes", 8),
                 kappa=kwargs.get("kappa", 1.0),
             )
         elif self.model_type == "ctm":
-            pass
+            tp = TopicModelDataPreparation(kwargs.get("contextualized_model", "paraphrase-distilroberta-base-v2"))
+            training_dataset = tp.fit(text_for_contextual=docs, text_for_bow=encoded_docs)
+            self.int_model =  CombinedTM(bow_size=len(tp.vocab), contextual_size=kwargs.get("contextual_size", 768), 
+                             n_components=num_topics)
+            self.int_model.fit(training_dataset) 
 
     def get_topics(self, num_words: int = 10) -> pd.DataFrame:
         if self.model_type == "lda" or self.model_type == "nmf":

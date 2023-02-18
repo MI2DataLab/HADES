@@ -35,11 +35,12 @@ class ModelOptimizer:
         self.coherence_measure = coherence_measure
         self.coherence_num_words = coherence_num_words
         self.data = df.loc[(df[list(column_filter)] == pd.Series(column_filter)).all(axis=1)]
+        self.docs = self.data["doc"]
         self.filtered_lemmas = get_filtered_lemmas(self.data, words_to_remove)
         self.lemmas_dictionary = get_lemmas_dictionary(self.filtered_lemmas)
         self.encoded_docs = self.filtered_lemmas.apply(self.lemmas_dictionary.doc2bow)
         self.models = get_models(
-            self.encoded_docs, self.model_type, topic_numbers_range, random_state, **kwargs
+            self.docs, self.encoded_docs, self.model_type, topic_numbers_range, random_state, **kwargs
         )
         self.cvs = get_coherences(self.models, self.filtered_lemmas, self.lemmas_dictionary, self.coherence_measure, self.coherence_num_words)
         self.topics_num = get_best_topics_num(self.cvs)
@@ -170,7 +171,8 @@ def get_best_topics_num(cvs: Dict[int, float]) -> int:
 
 
 def get_models(
-    corpus: Union[pd.Series, List[List[str]]],
+    docs: Union[pd.Series, List[List[str]]],
+    encoded_docs: Union[pd.Series, List[List[str]]],
     model_type: str = "lda",
     topic_numbers_range: Tuple[int, int] = (2, 11),
     random_state: Optional[int] = None,
@@ -179,7 +181,8 @@ def get_models(
     return {
         num_topics: Model(
             num_topics=num_topics,
-            corpus=corpus, 
+            docs = docs,
+            encoded_docs=encoded_docs, 
             model_type=model_type,
             random_state=random_state,
             **kwargs
