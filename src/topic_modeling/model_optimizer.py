@@ -1,14 +1,12 @@
-import string
 import warnings
 from collections import Counter
 from typing import Dict, List, Optional, Tuple, Union
+from .model import Model
 
 import numpy as np
 import pandas as pd
 from gensim.corpora.dictionary import Dictionary
-from gensim.models import CoherenceModel, EnsembleLda, LdaModel
-from gensim.models.ldamulticore import LdaMulticore
-from sklearn.manifold import TSNE
+from gensim.models import CoherenceModel
 from topic_modeling.utils import (
     get_filtered_lemmas,
     get_lemmas_dictionary,
@@ -16,10 +14,6 @@ from topic_modeling.utils import (
     umap_dim_reduction,
 )
 from tqdm import tqdm
-from umap import UMAP
-from pyLDAvis import prepared_data_to_html
-
-from plots.topics import interactive_exploration
 
 
 class ModelOptimizer:
@@ -27,28 +21,27 @@ class ModelOptimizer:
         self,
         df: pd.DataFrame,
         column_filter: Dict[str, str],
+        model_type: str = "lda",
         words_to_remove: List[str] = [],
         topic_numbers_range: Tuple[int, int] = (2, 11),
-        lda_alpha: Union[float, str] = "symmetric",
-        lda_passes: int = 8,
-        lda_iterations: int = 100,
         coherence_measure: str = "c_v",
+        coherence_num_words: int = 20, # number of words used for calculating coherence measure
         random_state: Optional[int] = None,
-    ):
+        **kwargs
+    ):  
+        self.model_type = model_type
         self.column_filter = column_filter
         self.random_state = random_state
-        self.lda_alpha = lda_alpha
-        self.lda_passes = lda_passes
-        self.lda_iterations = lda_iterations
         self.coherence_measure = coherence_measure
+        self.coherence_num_words = coherence_num_words
         self.data = df.loc[(df[list(column_filter)] == pd.Series(column_filter)).all(axis=1)]
         self.filtered_lemmas = get_filtered_lemmas(self.data, words_to_remove)
         self.lemmas_dictionary = get_lemmas_dictionary(self.filtered_lemmas)
         self.encoded_docs = self.filtered_lemmas.apply(self.lemmas_dictionary.doc2bow)
-        self.models = get_lda_models(
-            self.encoded_docs, topic_numbers_range, lda_passes, lda_iterations, lda_alpha, random_state
+        self.models = get_models(
+            self.encoded_docs, self.model_type, topic_numbers_range, random_state, **kwargs
         )
-        self.cvs = get_coherences(self.models, self.filtered_lemmas, self.lemmas_dictionary, self.coherence_measure)
+        self.cvs = get_coherences(self.models, self.filtered_lemmas, self.lemmas_dictionary, self.coherence_measure, self.coherence_num_words)
         self.topics_num = get_best_topics_num(self.cvs)
 
     @property
@@ -56,7 +49,7 @@ class ModelOptimizer:
         return self.models[self.topics_num]
 
     def get_topics_df(self, num_words: int = 10) -> pd.DataFrame:
-        topics = self.best_model.show_topics(formatted=False, num_words=num_words)
+        topics = self.best_model.get_topics(num_words=num_words)
         counter = Counter(self.filtered_lemmas.sum())
         out = [[word, i, weight, counter[word]] for i, topic in topics for word, weight in topic]
         df = pd.DataFrame(out, columns=["word", "topic_id", "importance", "word_count"])
@@ -65,7 +58,7 @@ class ModelOptimizer:
 
     def get_topic_probs_df(self) -> pd.DataFrame:
         """Returns original data frame with added columns for topic probabilites."""
-        corpus_model = self.best_model[self.encoded_docs]
+        corpus_model = self.best_model.get_topic_probs(self.encoded_docs)
         res_len = len(self.data)
         res = np.zeros((res_len, self.topics_num))
         for i, doc in enumerate(corpus_model):
@@ -126,15 +119,15 @@ class ModelOptimizer:
         )
         return mapping
 
-    def save(self, path: str = ""):
+    def save(self, path: str = "", label: str = ""):
         filter_name = "_".join([value.replace(" ", "_") for value in self.column_filter.values()])
-        self.encoded_docs.to_csv(path + str(self.lda_alpha) + "_" + filter_name + "_encoded_docs.csv")
-        self.lemmas_dictionary.save(path + str(self.lda_alpha) + "_" + filter_name + "_dictionary.dict")
-        self.best_model.save(path + str(self.lda_alpha) + "_" + filter_name + "_lda_model.model")
+        self.encoded_docs.to_csv(path + label + "_" + filter_name + "_encoded_docs.csv")
+        self.lemmas_dictionary.save(path + label + "_" + filter_name + "_dictionary.dict")
+        self.best_model.save(path + label + "_" + filter_name + "_model.model")
 
 
 def save_data_for_app(
-    model: ModelOptimizer,
+    model_optimizer: ModelOptimizer,
     num_words: int = 10,
     column: str = "country",
     perplexity: int = 10,
@@ -146,21 +139,22 @@ def save_data_for_app(
     min_dist: float = 0.1,
     learning_rate_umap: float = 1,
     path: str = "",
+    label: str = "",
 ):
-    filter_name = "_".join([value.replace(" ", "_") for value in model.column_filter.values()])
-    topic_words = model.get_topics_df(num_words)
-    topics_by_country = model.get_topic_probs_averaged_over_column(column)
-    model.save(path=path)
-    topic_words.to_csv(path + str(model.lda_alpha) + "_" + filter_name + "_topic_words.csv")
-    topics_by_country.to_csv(path + str(model.lda_alpha) + "_" + filter_name + "_probs.csv")
-    tsne_mapping = model.get_tsne_mapping(
+    filter_name = "_".join([value.replace(" ", "_") for value in model_optimizer.column_filter.values()])
+    topic_words = model_optimizer.get_topics_df(num_words)
+    topics_by_country = model_optimizer.get_topic_probs_averaged_over_column(column)
+    model_optimizer.save(path=path, label=label)
+    topic_words.to_csv(path + label + "_" + filter_name + "_topic_words.csv")
+    topics_by_country.to_csv(path + label + "_" + filter_name + "_probs.csv")
+    tsne_mapping = model_optimizer.get_tsne_mapping(
         column,
         perplexity,
         n_iter,
         init,
         learning_rate_tsne,
     )
-    umap_mapping = model.get_umap_mapping(
+    umap_mapping = model_optimizer.get_umap_mapping(
         column,
         n_neighbors,
         metric,
@@ -168,47 +162,45 @@ def save_data_for_app(
         learning_rate_umap,
     )
     mappings = tsne_mapping.join(umap_mapping)
-    mappings.to_csv(path + str(model.lda_alpha) + "_" + filter_name + "_mapping.csv")
-    vis = interactive_exploration(model.best_model, model.encoded_docs, model.lemmas_dictionary)
-    vis_html_string = prepared_data_to_html(vis)
-    with open(path + str(model.lda_alpha) + "_" + filter_name + "_vis.txt", "w") as text_file:
-        text_file.write(vis_html_string)
+    mappings.to_csv(path + label + "_" + filter_name + "_mapping.csv")
 
 
 def get_best_topics_num(cvs: Dict[int, float]) -> int:
     return max(cvs, key=cvs.get)
 
 
-def get_lda_models(
+def get_models(
     corpus: Union[pd.Series, List[List[str]]],
+    model_type: str = "lda",
     topic_numbers_range: Tuple[int, int] = (2, 11),
-    passes: int = 8,
-    iterations: int = 100,
-    alpha: Union[float, str] = "symmetric",
     random_state: Optional[int] = None,
-) -> Dict[int, LdaMulticore]:
+    **kwargs,
+) -> Dict[int, Model]:
     return {
-        num_topics: LdaMulticore(
-            corpus,
+        num_topics: Model(
             num_topics=num_topics,
-            passes=passes,
-            iterations=iterations,
+            corpus=corpus, 
+            model_type=model_type,
             random_state=random_state,
-            alpha=alpha,
+            **kwargs
         )
         for num_topics in tqdm(range(*topic_numbers_range))
     }
 
 
 def get_coherences(
-    models: Dict[int, LdaMulticore],
+    models: Dict[int, Model],
     texts: Union[pd.Series, List[List[str]]],
     dictionary: Dictionary,
     coherence: str = "c_v",
+    num_words: int = 20,
 ) -> Dict[int, float]:
     return {
         num_topics: CoherenceModel(
-            model, texts=texts, dictionary=dictionary, coherence=coherence
+            topics = model.get_topics_list(dictionary=dictionary, num_words=num_words), 
+            texts=texts, 
+            dictionary=dictionary, 
+            coherence=coherence
         ).get_coherence()
         for num_topics, model in tqdm(models.items())
     }
