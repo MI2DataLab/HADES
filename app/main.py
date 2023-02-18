@@ -9,22 +9,22 @@ import spacy
 import config_resilience_plans as config
 
 
-@st.cache
+@st.cache_data
 def load_df_data(df_file_name: str, index_col=False) -> pd.DataFrame:
     return pd.read_csv(df_file_name, index_col=index_col)
 
 
-@st.cache
+@st.cache_data
 def load_df_mapping_data(df_file_name: str, index_col=False) -> pd.DataFrame:
     return pd.read_csv(df_file_name, index_col=index_col)
 
 
-@st.cache
+@st.cache_data
 def load_df_keywords_data(df_file_name: str, index_col=False) -> pd.DataFrame:
     return pd.read_csv(df_file_name, index_col=index_col)
 
 
-@st.cache
+@st.cache_data
 def load_additional_dfs() -> dict:
     return {
         path.split("/")[-1]:pd.read_csv(path, index_col=0)
@@ -32,7 +32,7 @@ def load_additional_dfs() -> dict:
     }
 
 
-@st.cache
+@st.cache_data
 def load_summaries(file_path: str) -> json:
     f = open(file_path)
     j = json.load(f)
@@ -40,7 +40,7 @@ def load_summaries(file_path: str) -> json:
     return j
 
 
-@st.cache
+@st.cache_data
 def load_essentials(file_path: str) -> json:
     f = open(file_path)
     j = json.load(f)
@@ -239,7 +239,7 @@ with sc2:
 
 tabs = st.tabs(["Document details", "Topic details", "Additional data comparision"])
 with tabs[0]:
-    selected_document = st.selectbox("Select document", topics[config.DIVISION_COLUMN].unique(), index=0)
+    selected_document = st.selectbox("Select document", sorted(topics[config.DIVISION_COLUMN].unique()), index=0)
     st.header(f"Document details: {selected_document}")
 
     st.markdown(f"""<h4 style="padding-top: 0px;">Section summary:</h4>""", unsafe_allow_html=True)
@@ -276,8 +276,8 @@ with tabs[0]:
     st.header(f"Compare documents")
     selected_entities = st.multiselect(
         label="Select document",
-        options=topics[config.DIVISION_COLUMN].unique(),
-        default=topics[config.DIVISION_COLUMN].unique()[:2],  # assumption that there are two entities
+        options=sorted(topics[config.DIVISION_COLUMN].unique()),
+        default=sorted(topics[config.DIVISION_COLUMN].unique())[:2],  # assumption that there are two entities
     )
     radar_col, topic_dist_col = st.columns(2)
     with radar_col:
