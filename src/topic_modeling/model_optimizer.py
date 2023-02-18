@@ -152,17 +152,20 @@ class ModelOptimizer:
     def name_topics_automatically_gpt3(
         self,
         num_keywords: int = 15,
-        gpt3_model: str = "text-davinci-002",
+        gpt3_model: str = "text-davinci-003",
         temperature: int = 0.5,
     ) -> pd.DataFrame:
         openai.api_key = os.getenv("OPENAI_API_KEY")
         topics_keywords = self.get_topics_df(num_keywords)
+        exculded = []
         for i in range(self.topics_num):
             keywords = topics_keywords[topics_keywords["topic_id"] == i].word.to_list()
-            weights = topics_keywords[topics_keywords["topic_id"] == i].importance.to_list()
-            prompt = _generate_prompt(keywords, weights)
+            weights = topics_keywords[topics_keywords["topic_id"] == i].importance.to_list()               
+            prompt = _generate_prompt(keywords, weights, exculded)
             title = _generate_title(prompt, gpt3_model, temperature)
             self.topic_names_dict[i] = title
+            exculded.append(title)
+
 
     def name_topics_manually(
         self, topic_names: Union[List[str], Dict[int, str]]
@@ -260,14 +263,18 @@ def get_coherences(
     }
 
 
-def _generate_prompt(keywords: list, weights: list) -> str:
+def _generate_prompt(keywords: list, weights: list, excluded: list) -> str:
     keywords_weights = [word + ": " + str(weight) for word, weight in zip(keywords, weights)]
+    if len(excluded) > 0:
+        excluded_str = f"different than: {', '.join(excluded)} "
+    else:
+        excluded_str = ""
     return (
-        "Suggest short (maximum three words) name for a topic based on given keywords and their importance: "
+        f"Generate short (maximum three words) title {excluded_str}based on given keywords and their importance: "
         + ", ".join(keywords_weights)
     )
 
 
 def _generate_title(prompt: str, gpt3_model: str, temperature: int) -> str:
     response = openai.Completion.create(model=gpt3_model, prompt=prompt, temperature=temperature)
-    return response.choices[0].text.split("\n")[-1]
+    return response.choices[0].text.split("\n")[-1].replace('"', '')
