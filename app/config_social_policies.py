@@ -2,6 +2,8 @@ import json
 
 ## Data settings
 APP_SETTINGS_FILENAME = "app_settings_social_policies.json"
+COUNTRIES_DIVISION = True
+DIVISION_COLUMN = "country"
 with open(APP_SETTINGS_FILENAME) as f:
     SETTINGS_DICT = json.load(f)
 SECTIONS = list(SETTINGS_DICT["sections"].keys())

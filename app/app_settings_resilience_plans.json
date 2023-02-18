@@ -1,0 +1,35 @@
+{
+    "sections": 
+    {
+        "Executive summary": {
+            "probs": "data/resilience-plans/Executive_summary_probs.csv",
+            "mapping": "data/resilience-plans/Executive_summary_mapping.csv",
+            "topic_words": "data/resilience-plans/Executive_summary_topic_words.csv",
+            "vis": "data/resilience-plans/Executive_summary_vis.txt",
+            "essentials": "data/resilience-plans/Executive_summary_essentials.json"
+        },
+        "Recovery and resilience challenges: scene-setter": {
+            "probs": "data/resilience-plans/Recovery_and_resilience_challenges_scene_setter_probs.csv", 
+            "mapping": "data/resilience-plans/Recovery_and_resilience_challenges_scene_setter_mapping.csv",
+            "topic_words": "data/resilience-plans/Recovery_and_resilience_challenges_scene_setter_topic_words.csv",
+            "vis": "data/resilience-plans/Recovery_and_resilience_challenges_scene_setter_vis.txt",
+            "essentials": "data/resilience-plans/Recovery_and_resilience_challenges_scene_setter_essentials.json"
+        },
+        "Objectives, structure and governance of the plan": {
+            "probs": "data/resilience-plans/Objectives_structure_and_governance_of_the_plan_probs.csv", 
+            "mapping": "data/resilience-plans/Objectives_structure_and_governance_of_the_plan_mapping.csv",
+            "topic_words": "data/resilience-plans/Objectives_structure_and_governance_of_the_plan_topic_words.csv",
+            "vis": "data/resilience-plans/Objectives_structure_and_governance_of_the_plan_vis.txt",
+            "essentials": "data/resilience-plans/Objectives_structure_and_governance_of_the_plan_essentials.json"
+        },
+        "Summary of the assessment of the plan": {
+            "probs": "data/resilience-plans/Summary_of_the_assessment_of_the_plan_probs.csv", 
+            "mapping": "data/resilience-plans/Summary_of_the_assessment_of_the_plan_mapping.csv",
+            "topic_words": "data/resilience-plans/Summary_of_the_assessment_of_the_plan_topic_words.csv",
+            "vis": "data/resilience-plans/Summary_of_the_assessment_of_the_plan_vis.txt",
+            "essentials": "data/resilience-plans/Summary_of_the_assessment_of_the_plan_essentials.json"
+        }
+    },
+    "summaries_file": "data/resilience-plans/summaries.json",
+    "additional_files": []
+}
