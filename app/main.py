@@ -245,8 +245,9 @@ with tabs[0]:
     st.markdown(f"""<h4 style="padding-top: 0px;">Section summary:</h4>""", unsafe_allow_html=True)
     st.write(summaries[selected_section][selected_document])
     st.markdown(f"""<hr style='margin: 0px;'>""", unsafe_allow_html=True)
-    # TO DO
+    # if ordered
     clean_topics = [topic_name.split(" ", 1)[1] for topic_name in topic_names[np.array(config.order_dict[selected_section]) - 1]]
+    # if not
     # clean_topics = [topic_name.split(" ", 1)[1] for topic_name in topic_names]
     selected_topic = st.selectbox(
         "Select topic",
@@ -280,14 +281,12 @@ with tabs[0]:
     )
     radar_col, topic_dist_col = st.columns(2)
     with radar_col:
-        # st.markdown("#"); st.markdown("#");
         st.plotly_chart(
             utils.plot_topic_distribution_radar(topics, selected_entities, app_format=True),
             config=config.DEFAULT_CONFIG,
             use_container_width=True,
             width=500,
         )
-        #### EXPERIMENTAL ####
         topic_names = np.hstack(topics.columns[1:])
         html_text_legend = "".join(["<span style='display: inline-block;'>T" + str(i) + ": " + topic_names[i] + "  &#x2022; </span>" for i in range(len(topic_names))])
         html_string = f"""
@@ -296,7 +295,6 @@ with tabs[0]:
         </div>
         """
         st.markdown(html_string, unsafe_allow_html=True)
-        #### EXPERIMENTAL ####
     with topic_dist_col:
         st.plotly_chart(
             utils.plot_topic_distribution_violinplot(topics, selected_entities),
@@ -327,8 +325,10 @@ with tabs[1]:
     ] * n_topics
     keywords_col1, keywords_col2 = st.columns(2)
     for i in range(n_topics):
+        # if ordered
         topic_num = config.order_dict[selected_section][i] - 1
-        # topic_num = i  # TODO to generalize
+        # if not
+        # topic_num = i
         if i % 2:
             keywords_col2.pyplot(
                 utils.plot_topics(
