@@ -42,12 +42,12 @@ class ModelOptimizer:
         self.coherence_measure = coherence_measure
         self.coherence_num_words = coherence_num_words
         self.data = df.loc[(df[list(column_filter)] == pd.Series(column_filter)).all(axis=1)]
-        self.docs = self.data["doc"]
+        self.docs = self.data["text"]
         self.filtered_lemmas = get_filtered_lemmas(self.data, words_to_remove)
         self.lemmas_dictionary = get_lemmas_dictionary(self.filtered_lemmas)
         self.encoded_docs = self.filtered_lemmas.apply(self.lemmas_dictionary.doc2bow)
         self.models = get_models(
-            self.docs, self.encoded_docs, self.model_type, topic_numbers_range, random_state, **kwargs
+            self.docs, self.encoded_docs, self.filtered_lemmas, self.model_type, topic_numbers_range, random_state, **kwargs
         )
         self.cvs = get_coherences(self.models, self.filtered_lemmas, self.lemmas_dictionary, self.coherence_measure, self.coherence_num_words)
         self.topics_num = get_best_topics_num(self.cvs)
@@ -58,28 +58,19 @@ class ModelOptimizer:
         return self.models[self.topics_num]
 
     def get_topics_df(self, num_words: int = 10) -> pd.DataFrame:
-        topics = self.best_model.get_topics(num_words=num_words)
+        result, is_word = self.best_model.get_topics(num_words=num_words)
         counter = Counter(self.filtered_lemmas.sum())
         id2word_dict = self.lemmas_dictionary
-        out = [[
-            id2word_dict[int(word_id)],
-            topic_id,
-            weight,
-            counter[id2word_dict[int(word_id)]]
-        ]
-        for topic_id, topic in topics for word_id, weight in topic]
-        df = pd.DataFrame(out, columns=["word", "topic_id", "importance", "word_count"])
-        df = df.sort_values(by=["importance"], ascending=False)
-        return df
+        if not is_word:
+            result.iloc[:, 1] = result.iloc[:, 1].map(id2word_dict)
+        result["word_count"] = result.iloc[:, 1].map(counter)
+        result.columns = ["word", "topic_id", "importance", "word_count"]
+        result = result.sort_values(by=["importance"], ascending=False)
+        return result
 
     def get_topic_probs_df(self) -> pd.DataFrame:
         """Returns original data frame with added columns for topic probabilites."""
-        corpus_model = self.best_model.get_topic_probs(self.encoded_docs)
-        res_len = len(self.data)
-        res = np.zeros((res_len, self.topics_num))
-        for i, doc in enumerate(corpus_model):
-            for topic in doc:
-                res[i][topic[0]] = np.round(topic[1], 4)
+        res = self.best_model.get_topic_probs(self.encoded_docs)
         modeling_results = pd.concat([self.data.reset_index(drop=True), pd.DataFrame(res)], axis=1)
 
         return modeling_results
@@ -226,6 +217,7 @@ def get_best_topics_num(cvs: Dict[int, float]) -> int:
 def get_models(
     docs: Union[pd.Series, List[List[str]]],
     encoded_docs: Union[pd.Series, List[List[str]]],
+    filtered_lemmas: Union[pd.Series, List[List[str]]],
     model_type: str = "lda",
     topic_numbers_range: Tuple[int, int] = (2, 11),
     random_state: Optional[int] = None,
@@ -234,7 +226,8 @@ def get_models(
     return {
         num_topics: Model(
             num_topics=num_topics,
-            docs = docs,
+            docs=docs,
+            filtered_lemmas=filtered_lemmas,
             encoded_docs=encoded_docs, 
             model_type=model_type,
             random_state=random_state,
@@ -249,7 +242,7 @@ def get_coherences(
     texts: Union[pd.Series, List[List[str]]],
     dictionary: Dictionary,
     coherence: str = "c_v",
-    num_words: int = 20,
+    num_words: int = 40,
 ) -> Dict[int, float]:
     return {
         num_topics: CoherenceModel(
