@@ -34,8 +34,11 @@ def get_hierarchical_clusters(linkage: np.ndarray, t: float = 1.0):
     return hc.fcluster(linkage, t=t, criterion="distance")
 
 
-def get_kmeans_clusters(topic_probs: pd.DataFrame, n_clusters: int, random_state: int = 42):
-    kmeans = KMeans(n_clusters=n_clusters, random_state=random_state).fit(topic_probs)
+def get_kmeans_clusters(topic_probs: pd.DataFrame,
+                        n_clusters: int,
+                        n_init: Union[str, int] = "auto",
+                        random_state: int = 42) -> np.ndarray:
+    kmeans = KMeans(n_clusters=n_clusters, random_state=random_state, n_init=n_init).fit(topic_probs)
     return kmeans.labels_
 
 
