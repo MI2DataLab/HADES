@@ -1,0 +1,31 @@
+,word,topic_id,importance,word_count
+10,gmi,1,0.024438536,115
+0,gmi,0,0.022033902,115
+20,gmi,2,0.017815182,115
+11,social service,1,0.016113374,78
+12,minimum income,1,0.015432902,75
+1,social service,0,0.014168552,78
+2,minimum income,0,0.0137077,75
+21,social service,2,0.013493417,78
+22,minimum income,2,0.01297074,75
+23,monthly,2,0.012672705,59
+3,person,0,0.011418572,53
+4,monthly,0,0.011371262,59
+5,minimum income scheme february,0,0.009854143,48
+24,minimum income scheme february,2,0.00945461,48
+25,person,2,0.009359827,53
+13,monthly,1,0.009141191,59
+14,person,1,0.009099942,53
+15,minimum income scheme,1,0.00881143,36
+26,different,2,0.008797852,38
+16,labour market,1,0.00849077,39
+6,policy,0,0.0082640145,38
+17,set,1,0.008242953,38
+18,time,1,0.008130347,40
+19,municipality,1,0.007818306,37
+7,time,0,0.0077433647,40
+27,right,2,0.0077376715,35
+28,additional,2,0.007682344,35
+8,labour market,0,0.0076817684,39
+29,act,2,0.007444886,36
+9,municipality,0,0.007270643,37

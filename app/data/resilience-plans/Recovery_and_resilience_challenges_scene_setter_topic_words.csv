@@ -1,0 +1,51 @@
+,word,topic_id,importance,word_count
+10,reform investment,1,0.01878037,156
+11,eur million,1,0.0144256465,123
+12,recovery resilience facility,1,0.0062770937,63
+13,pension system,1,0.0060525625,63
+14,propose,1,0.005553116,53
+30,eur billion,3,0.005286448,87
+15,sustainable transport,1,0.0052132164,60
+16,csr,1,0.005182965,42
+20,eur billion,2,0.0051450026,87
+17,mechanism,1,0.005052893,50
+18,recommendation,1,0.0049591335,46
+19,cybersecurity,1,0.004791153,52
+0,eur billion,0,0.004036243,87
+31,percentage point,3,0.003967761,75
+32,public service,3,0.0038970439,81
+1,percentage point,0,0.0038578215,75
+21,percentage point,2,0.0038271064,75
+40,eur billion,4,0.0037466483,87
+41,percentage point,4,0.0036458797,75
+22,public service,2,0.0033754131,81
+23,climate action,2,0.003370398,51
+42,public service,4,0.003239274,81
+43,education system,4,0.0031557956,63
+2,public service,0,0.0031167069,81
+24,economic recovery,2,0.003069087,60
+3,climate action,0,0.0030380848,51
+33,transport sector,3,0.0029205706,54
+25,long term,2,0.0029022542,48
+34,billion,3,0.0028625403,51
+4,economic recovery,0,0.0028379497,60
+5,economic activity,0,0.0028286052,42
+6,public finance,0,0.002826773,54
+26,index desi,2,0.0028227095,39
+27,final energy consumption,2,0.002795425,42
+44,high eu average,4,0.002765959,42
+7,air quality,0,0.0027199176,48
+45,public finance,4,0.002703031,54
+35,social exclusion,3,0.0026938845,51
+46,long term,4,0.002641168,48
+28,public finance,2,0.0026403905,54
+36,economic recovery,3,0.0026275378,60
+29,young people,2,0.0026233862,42
+8,banking sector,0,0.002617601,42
+9,share renewable energy,0,0.0025751854,42
+47,air quality,4,0.0025699309,48
+48,climate action,4,0.0024988616,51
+37,effort sharing regulation,3,0.0024979962,39
+49,banking sector,4,0.0024548573,42
+38,final energy consumption,3,0.0023708793,42
+39,public finance,3,0.0023329312,54
