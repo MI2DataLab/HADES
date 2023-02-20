@@ -1,52 +1,49 @@
 {
     "sections": 
     {
-        "Governance mechanism": {
-            "probs": "data/social-policies/Governance_mechanisms_probs.csv",
-            "mapping": "data/social-policies/Governance_mechanisms_mapping.csv",
-            "topic_words": "data/social-policies/Governance_mechanisms_topic_words.csv",
-            "vis": "data/social-policies/Governance_mechanisms_vis.txt",
-            "essentials": "data/social-policies/Governance_mechanisms_essentials.json"
+        "Governance mechanisms": {
+            "probs": "app/data/social-policies/Governance_mechanisms_probs.csv",
+            "mapping": "app/data/social-policies/Governance_mechanisms_mapping.csv",
+            "topic_words": "app/data/social-policies/Governance_mechanisms_topic_words.csv",
+            "vis": "app/data/social-policies/Governance_mechanisms_vis.txt",
+            "essentials": "app/data/social-policies/Governance_mechanisms_essentials.json"
         },
         "Impact of minimum income schemes": {
-            "probs": "data/social-policies/Impact_of_minimum_income_schemes_probs.csv", 
-            "mapping": "data/social-policies/Impact_of_minimum_income_schemes_mapping.csv",
-            "topic_words": "data/social-policies/Impact_of_minimum_income_schemes_topic_words.csv",
-            "vis": "data/social-policies/Impact_of_minimum_income_schemes_vis.txt",
-            "essentials": "data/social-policies/Impact_of_minimum_income_schemes_essentials.json"
+            "probs": "app/data/social-policies/Impact_of_minimum_income_schemes_probs.csv", 
+            "mapping": "app/data/social-policies/Impact_of_minimum_income_schemes_mapping.csv",
+            "topic_words": "app/data/social-policies/Impact_of_minimum_income_schemes_topic_words.csv",
+            "vis": "app/data/social-policies/Impact_of_minimum_income_schemes_vis.txt",
+            "essentials": "app/data/social-policies/Impact_of_minimum_income_schemes_essentials.json"
         },
         "Links to social services": {
-            "probs": "data/social-policies/Links_to_social_services_probs.csv", 
-            "mapping": "data/social-policies/Links_to_social_services_mapping.csv",
-            "topic_words": "data/social-policies/Links_to_social_services_topic_words.csv",
-            "vis": "data/social-policies/Links_to_social_services_vis.txt",
-            "essentials": "data/social-policies/Links_to_social_services_essentials.json"
+            "probs": "app/data/social-policies/Links_to_social_services_probs.csv", 
+            "mapping": "app/data/social-policies/Links_to_social_services_mapping.csv",
+            "topic_words": "app/data/social-policies/Links_to_social_services_topic_words.csv",
+            "vis": "app/data/social-policies/Links_to_social_services_vis.txt",
+            "essentials": "app/data/social-policies/Links_to_social_services_essentials.json"
         },
         "Links with labour market activation": {
-            "probs": "data/social-policies/Links_with_labour_market_activation_probs.csv", 
-            "mapping": "data/social-policies/Links_with_labour_market_activation_mapping.csv",
-            "topic_words": "data/social-policies/Links_with_labour_market_activation_topic_words.csv",
-            "vis": "data/social-policies/Links_with_labour_market_activation_vis.txt",
-            "essentials": "data/social-policies/Links_with_labour_market_activation_essentials.json"
+            "probs": "app/data/social-policies/Links_with_labour_market_activation_probs.csv", 
+            "mapping": "app/data/social-policies/Links_with_labour_market_activation_mapping.csv",
+            "topic_words": "app/data/social-policies/Links_with_labour_market_activation_topic_words.csv",
+            "vis": "app/data/social-policies/Links_with_labour_market_activation_vis.txt",
+            "essentials": "app/data/social-policies/Links_with_labour_market_activation_essentials.json"
         },
         "National schemes": {
-            "probs": "data/social-policies/National_schemes_probs.csv", 
-            "mapping": "data/social-policies/National_schemes_mapping.csv",
-            "topic_words": "data/social-policies/National_schemes_topic_words.csv",
-            "vis": "data/social-policies/National_schemes_vis.txt",
-            "essentials": "data/social-policies/National_schemes_essentials.json"
+            "probs": "app/data/social-policies/National_schemes_probs.csv", 
+            "mapping": "app/data/social-policies/National_schemes_mapping.csv",
+            "topic_words": "app/data/social-policies/National_schemes_topic_words.csv",
+            "vis": "app/data/social-policies/National_schemes_vis.txt",
+            "essentials": "app/data/social-policies/National_schemes_essentials.json"
         },
         "Summary": {
-            "probs": "data/social-policies/Summary_probs.csv", 
-            "mapping": "data/social-policies/Summary_mapping.csv",
-            "topic_words": "data/social-policies/Summary_topic_words.csv",
-            "vis": "data/social-policies/Summary_vis.txt",
-            "essentials": "data/social-policies/Summary_essentials.json"
+            "probs": "app/data/social-policies/Summary_probs.csv", 
+            "mapping": "app/data/social-policies/Summary_mapping.csv",
+            "topic_words": "app/data/social-policies/Summary_topic_words.csv",
+            "vis": "app/data/social-policies/Summary_vis.txt",
+            "essentials": "app/data/social-policies/Summary_essentials.json"
         }
     },
-    "summaries_file": "data/social-policies/summaries.json",
-    "additional_files": [
-        "data/social-policies/additional/comissions_individual_assesment.csv",
-        "data/social-policies/additional/planning_for_net_zero_report.csv"
-    ]
+    "summaries_file": "app/data/social-policies/summaries.json",
+    "additional_files": []
 }

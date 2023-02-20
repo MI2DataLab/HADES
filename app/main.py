@@ -9,22 +9,22 @@ import spacy
 import config_resilience_plans as config
 
 
-@st.cache_data
+@st.cache
 def load_df_data(df_file_name: str, index_col=False) -> pd.DataFrame:
     return pd.read_csv(df_file_name, index_col=index_col)
 
 
-@st.cache_data
+@st.cache
 def load_df_mapping_data(df_file_name: str, index_col=False) -> pd.DataFrame:
     return pd.read_csv(df_file_name, index_col=index_col)
 
 
-@st.cache_data
+@st.cache
 def load_df_keywords_data(df_file_name: str, index_col=False) -> pd.DataFrame:
     return pd.read_csv(df_file_name, index_col=index_col)
 
 
-@st.cache_data
+@st.cache
 def load_additional_dfs() -> dict:
     return {
         path.split("/")[-1]:pd.read_csv(path, index_col=0)
@@ -32,7 +32,7 @@ def load_additional_dfs() -> dict:
     }
 
 
-@st.cache_data
+@st.cache
 def load_summaries(file_path: str) -> json:
     f = open(file_path)
     j = json.load(f)
@@ -40,7 +40,7 @@ def load_summaries(file_path: str) -> json:
     return j
 
 
-@st.cache_data
+@st.cache
 def load_essentials(file_path: str) -> json:
     f = open(file_path)
     j = json.load(f)
@@ -245,10 +245,7 @@ with tabs[0]:
     st.markdown(f"""<h4 style="padding-top: 0px;">Section summary:</h4>""", unsafe_allow_html=True)
     st.write(summaries[selected_section][selected_document])
     st.markdown(f"""<hr style='margin: 0px;'>""", unsafe_allow_html=True)
-    # if ordered
-    clean_topics = [topic_name.split(" ", 1)[1] for topic_name in topic_names[np.array(config.order_dict[selected_section]) - 1]]
-    # if not
-    # clean_topics = [topic_name.split(" ", 1)[1] for topic_name in topic_names]
+    clean_topics = [topic_name.split(" ", 1)[1] for topic_name in topic_names]
     selected_topic = st.selectbox(
         "Select topic",
         clean_topics,
@@ -325,10 +322,7 @@ with tabs[1]:
     ] * n_topics
     keywords_col1, keywords_col2 = st.columns(2)
     for i in range(n_topics):
-        # if ordered
-        topic_num = config.order_dict[selected_section][i] - 1
-        # if not
-        # topic_num = i
+        topic_num = i
         if i % 2:
             keywords_col2.pyplot(
                 utils.plot_topics(
@@ -400,3 +394,4 @@ with tabs[2]:
             st.pyplot(utils.plot_correlation_heatmap(corr_df))
     else:
         st.write("There aren't any additional files defined")
+        st.write("Additional files can be defined in application settings")
