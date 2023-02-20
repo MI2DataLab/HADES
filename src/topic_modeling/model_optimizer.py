@@ -142,7 +142,10 @@ class ModelOptimizer:
 
 
     def save(self, path: str = ""):
-        filter_name = "_".join([value.replace(":","").replace(" ","_").replace(",","").replace("/","_").replace("(","").replace(")","").replace("&","").replace("-","_")
+        filter_name = "_".join([value.replace(":","").replace(" ","_")
+                                     .replace(",","").replace("/","_")
+                                     .replace("(","").replace(")","")
+                                     .replace("&","").replace("-","_")
                                 for value in self.column_filter.values()])
         self.encoded_docs.to_csv(path + filter_name + "_encoded_docs.csv")
         self.lemmas_dictionary.save(path + filter_name + "_dictionary.dict")
@@ -197,14 +200,17 @@ def save_data_for_app(
     path: str = "",
     label: str = "",
 ):
-    filter_name = "_".join([value.replace(":","").replace(" ","_").replace(",","").replace("/","_").replace("(","").replace(")","").replace("&","").replace("-","_")
-                            for value in model.column_filter.values()])
-    topic_words = model.get_topics_df(num_words)
-    topics_by_country = model.get_topic_probs_averaged_over_column(column, show_names=True)
-    model.save(path=path)
+    filter_name = "_".join([value.replace(":","").replace(" ","_")
+                                 .replace(",","").replace("/","_")
+                                 .replace("(","").replace(")","")
+                                 .replace("&","").replace("-","_")
+                            for value in model_optimizer.column_filter.values()])
+    topic_words = model_optimizer.get_topics_df(num_words)
+    topics_by_country = model_optimizer.get_topic_probs_averaged_over_column(column, show_names=True)
+    model_optimizer.save(path=path)
     topic_words.to_csv(path + filter_name + "_topic_words.csv")
     topics_by_country.to_csv(path + filter_name + "_probs.csv")
-    tsne_mapping = model.get_tsne_mapping(
+    tsne_mapping = model_optimizer.get_tsne_mapping(
         column,
         perplexity,
         n_iter,
@@ -220,8 +226,9 @@ def save_data_for_app(
     )
     mappings = tsne_mapping.join(umap_mapping)
     mappings.to_csv(path + filter_name + "_mapping.csv")
-    vis = interactive_exploration(model.best_model, model.encoded_docs, model.lemmas_dictionary)
-    vis_html_string = prepared_data_to_html(vis)
+    if model_optimizer.best_model.model_type == "lda":
+        vis = interactive_exploration(model_optimizer.best_model.int_model, model_optimizer.encoded_docs, model_optimizer.lemmas_dictionary)
+        vis_html_string = prepared_data_to_html(vis)
     with open(path + filter_name + "_vis.txt", "w") as text_file:
         text_file.write(vis_html_string)
 

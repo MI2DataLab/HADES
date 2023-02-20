@@ -14,7 +14,7 @@ pyLDAvis.enable_notebook()
 
 
 def interactive_exploration(lda_model: LdaModel, encoded_docs: pd.Series, dictionary: Dictionary):
-    return pyLDAvis.gensim_models.prepare(lda_model, encoded_docs, dictionary=dictionary)
+    return pyLDAvis.gensim_models.prepare(lda_model, encoded_docs, dictionary=dictionary, sort_topics=False)
 
 
 def plot_topics(
