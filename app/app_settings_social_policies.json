@@ -1,7 +1,7 @@
 {
     "sections": 
     {
-        "Governance mechanism": {
+        "Governance mechanisms": {
             "probs": "data/social-policies/Governance_mechanisms_probs.csv",
             "mapping": "data/social-policies/Governance_mechanisms_mapping.csv",
             "topic_words": "data/social-policies/Governance_mechanisms_topic_words.csv",
@@ -45,8 +45,5 @@
         }
     },
     "summaries_file": "data/social-policies/summaries.json",
-    "additional_files": [
-        "data/social-policies/additional/comissions_individual_assesment.csv",
-        "data/social-policies/additional/planning_for_net_zero_report.csv"
-    ]
+    "additional_files": []
 }
