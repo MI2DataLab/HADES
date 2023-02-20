@@ -82,7 +82,7 @@ def tsne_dim_reduction(
     perplexity = min(perplexity, result_df.shape[0] - 1)
     tsne = TSNE(
         n_components=2,
-        verbose=1,
+        verbose=0,
         perplexity=perplexity,
         n_iter=n_iter,
         init=init,
