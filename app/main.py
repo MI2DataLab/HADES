@@ -73,6 +73,10 @@ st.markdown(
             transform: scale(0.93);
             margin-left: -50px;
         }}
+        .css-19plaz0{{
+            transform: scale(0.93);
+            margin-left: -50px;
+        }}
     </style>
     """,
     unsafe_allow_html=True,
