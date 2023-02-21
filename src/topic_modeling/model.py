@@ -76,7 +76,7 @@ class Model:
         elif self.model_type == "ctm":
             return self.int_model.get_topic_lists(num_words)
         
-    def get_topic_probs(self, corpus: Union[pd.Series, List[List[str]]]) -> pd.DataFrame:
+    def get_topic_probs(self, corpus: Union[pd.Series, List[List[str]]]) -> np.ndarray:
         if self.model_type == "lda" or self.model_type == "nmf":
             corpus_model = self.int_model[corpus]
             res_len = len(corpus)
