@@ -252,7 +252,7 @@ def plot_topic_distribution_radar(df, selected_entities, entity_colname="country
         r = np.hstack(row[1:].values)
         name = row[0]
         if app_format:
-            theta = ["T" + str(i) for i in range(len(topic_names))]
+            theta = ["T" + str(i+1) for i in range(len(topic_names))]
         else:
             theta = topic_names
         fig.add_trace(
