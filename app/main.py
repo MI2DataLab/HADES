@@ -49,6 +49,10 @@ def load_essentials(file_path: str) -> json:
     return j
 
 
+if 'en' not in st.session_state:
+        st.session_state.en =  spacy.load('en_core_web_sm')
+
+
 st.markdown(
     f"""
     <style>
@@ -83,8 +87,6 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-if 'en' not in st.session_state:
-        st.session_state.en =  spacy.load('en_core_web_sm')
 
 st.markdown("# Welcome to CompaDoc")
 st.markdown("#### A powerful tool for comparing similarly structured documents")
@@ -237,7 +239,7 @@ with sc1:
                 use_container_width=True,
         )
 with sc2:
-    st.markdown("#"); st.markdown("#"); st.markdown("#"); st.markdown("#"); st.markdown("#"); st.markdown("#")
+    st.markdown(f"""</br></br></br></br></br></br>""", unsafe_allow_html=True)
     st.metric("Number of clusters", len(np.unique(labels)))
     pval = utils.manova_significant_difference_pval(
         topics.iloc[:, 1:], labels
@@ -251,7 +253,7 @@ with sc2:
             "{:.6f}".format(round(pval, 6)),
         )
     if config.COUNTRIES_DIVISION:
-        st.markdown("#")
+        st.markdown(f"""</br></br>""", unsafe_allow_html=True)
 
 
 st.markdown(
@@ -262,8 +264,9 @@ st.markdown(
     - Additional data comparison section shows comparison to data like geopolitical factors
     """
 )
-
 tabs = st.tabs(["Document details", "Topic details", "Additional data comparision"])
+
+
 with tabs[0]:
     selected_document = st.selectbox("Select document", sorted(topics[config.DIVISION_COLUMN].unique()), index=0)
     st.header(f"Document details: {selected_document}")
@@ -285,16 +288,6 @@ with tabs[0]:
     for i in range(3):   
         ess_sentence = essential_sentences[selected_document][str(topic_num)]['sentences'][i][0]
         ess_sentence_splitted = ess_sentence.split()
-        # html_sentence = "<p>"
-        # for word in ess_sentence_splitted:
-        #     word_en = st.session_state.en(word)
-        #     is_imp = bool(word_en[0].lemma_ in ess_words)
-        #     if is_imp:
-        #         html_sentence = html_sentence + " <span class='imp_word'>" + word + "</span>"
-        #     else:
-        #         html_sentence = html_sentence + " " + word
-        # html_sentence = html_sentence + "</p>"
-        # st.markdown(f"""{html_sentence}""", unsafe_allow_html=True)
         sentence = [f"{i+1}. "]
         for word in ess_sentence_splitted:
             word_en = st.session_state.en(word)
@@ -307,7 +300,7 @@ with tabs[0]:
             else:
                 sentence.append(str(word + " "))
         annotated_text(*sentence)
-        st.markdown("####")
+        st.markdown(f"""</br>""", unsafe_allow_html=True)
 
     st.header(f"Compare documents")
     selected_entities = st.multiselect(
@@ -338,6 +331,7 @@ with tabs[0]:
             use_container_width=True,
             width=500,
         )
+
 
 with tabs[1]:
     st.header("Topic analysis")
@@ -428,8 +422,7 @@ with tabs[2]:
             corr_df = corr_df.drop(selected_columns, axis=1)
             corr_df = corr_df.drop(selected_columns_additional, axis=0)
         with heatmap_plot_col:
-            st.markdown("#")
-            st.markdown("#")
+            st.markdown(f"""</br></br></br>""", unsafe_allow_html=True)
             st.pyplot(utils.plot_correlation_heatmap(corr_df))
     else:
         st.write("There aren't any additional files defined")
