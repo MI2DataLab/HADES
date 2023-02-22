@@ -7,7 +7,7 @@ import json
 import spacy
 from annotated_text import annotated_text
 
-import config_resilience_plans as config
+import config_necps as config
 
 
 @st.cache
