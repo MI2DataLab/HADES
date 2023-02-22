@@ -135,9 +135,12 @@ social_results/
 *.DS_Store
 .idea/
 
+*.csv
+*.json
 *.joblib
 *.pdf
 *.dict
+*.txt
 *.model
 *.npy
 *.id2word
