@@ -64,7 +64,7 @@ class ModelOptimizer:
         if not is_word:
             result.iloc[:, 1] = result.iloc[:, 1].map(id2word_dict)
         result["word_count"] = result.iloc[:, 1].map(counter)
-        result.columns = ["word", "topic_id", "importance", "word_count"]
+        result.columns = ["topic_id", "word", "importance", "word_count"]
         result = result.sort_values(by=["importance"], ascending=False)
         return result
 
@@ -96,7 +96,8 @@ class ModelOptimizer:
         res = pd.DataFrame(np.vstack(result), index=column_vals_added)
         res.index.name = column
         if show_names:
-            res.columns = [self.topic_names_dict[i] for i in range(self.topics_num)]
+            if not len(res.columns)%self.topics_num:
+                res.columns =  len(res.columns)//self.topics_num * [self.topic_names_dict[i] for i in range(self.topics_num)]
         return res
 
     def get_tsne_mapping(
@@ -273,12 +274,12 @@ def get_coherences(
 def _generate_prompt(keywords: list, weights: list, excluded: list = []) -> str:
     keywords_weights = [word + ": " + str(weight) for word, weight in zip(keywords, weights)]
     if len(excluded) > 0:
-        excluded_str = f"different than: {', '.join(excluded)} "
+        excluded_str = f". Desctription must be different than: {', '.join(excluded)} "
     else:
         excluded_str = ""
     return (
-        f"Generate short (maximum three words) title {excluded_str}based on given keywords and their importance: "
-        + ", ".join(keywords_weights)
+        "Describe topic in maximum three words based on given keywords and their importance: "
+        + ", ".join(keywords_weights) + excluded_str
     )
 
 
