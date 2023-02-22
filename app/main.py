@@ -7,7 +7,7 @@ import json
 import spacy
 from annotated_text import annotated_text
 
-import config_resilience_plans as config
+import config_necps as config
 
 
 @st.cache
@@ -317,7 +317,7 @@ with tabs[0]:
             width=500,
         )
         topic_names = np.hstack(topics.columns[1:])
-        html_text_legend = "".join(["<span style='display: inline-block;'>T" + str(i) + ": " + topic_names[i] + "  &#x2022; </span>" for i in range(len(topic_names))])
+        html_text_legend = "".join(["<span style='display: inline-block;'>T" + str(i+1) + ": " + topic_names[i] + "  &#x2022; </span>" for i in range(len(topic_names))])
         html_string = f"""
         <div style="border: 1px solid #808495;border-radius: 5px;padding: 10px;margin: 5px 20px; color: #808495;">
             {html_text_legend}

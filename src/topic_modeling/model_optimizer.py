@@ -191,7 +191,7 @@ def save_data_for_app(
     min_dist: float = 0.1,
     learning_rate_umap: float = 1,
     path: str = "",
-    label: str = "",
+    save_model: bool = False,
 ):
     filter_name = "_".join([value.replace(":","").replace(" ","_")
                                  .replace(",","").replace("/","_")
@@ -200,7 +200,8 @@ def save_data_for_app(
                             for value in model_optimizer.column_filter.values()])
     topic_words = model_optimizer.get_topics_df(num_words)
     topics_by_country = model_optimizer.get_topic_probs_averaged_over_column(column, show_names=True)
-    model_optimizer.save(path=path)
+    if save_model:
+        model_optimizer.save(path=path)
     topic_words.to_csv(path + filter_name + "_topic_words.csv")
     topics_by_country.to_csv(path + filter_name + "_probs.csv")
     tsne_mapping = model_optimizer.get_tsne_mapping(
