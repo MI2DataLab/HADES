@@ -22,7 +22,7 @@
             "vis": "app/data/necps/Energy_security_vis.txt",
             "essentials": "app/data/necps/Energy_security_essentials.json"
         },
-        "Internal_market": {
+        "Internal market": {
             "probs": "app/data/necps/Internal_market_probs.csv", 
             "mapping": "app/data/necps/Internal_market_mapping.csv",
             "topic_words": "app/data/necps/Internal_market_topic_words.csv",
