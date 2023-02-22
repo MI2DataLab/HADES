@@ -5,6 +5,7 @@ from copy import deepcopy
 import utils
 import json
 import spacy
+from annotated_text import annotated_text
 
 import config_resilience_plans as config
 
@@ -48,6 +49,10 @@ def load_essentials(file_path: str) -> json:
     return j
 
 
+if 'en' not in st.session_state:
+        st.session_state.en =  spacy.load('en_core_web_sm')
+
+
 st.markdown(
     f"""
     <style>
@@ -73,15 +78,28 @@ st.markdown(
             transform: scale(0.93);
             margin-left: -50px;
         }}
+        .css-19plaz0{{
+            transform: scale(0.93);
+            margin-left: -50px;
+        }}
     </style>
     """,
     unsafe_allow_html=True,
 )
 
-if 'en' not in st.session_state:
-        st.session_state.en =  spacy.load('en_core_web_sm')
 
-st.title("Policy Comparison App")
+st.markdown("# Welcome to HADES!")
+st.markdown("#### Homologous Automated Document Exploration and Summarization - A powerful tool for comparing similarly structured documents")
+st.markdown(
+    """
+    On the left-hand side of the screen, you can select from different sections to access a range of options for data mapping, clustering, and metrics. Click on this link to learn more about our methods.
+
+    Take a look at the plot below to see the results of our clustering analysis. The number of clusters shows you how we group your documents, and the MANOVA p value indicates the quality of the grouping. A p value lower than 0.05 is considered a good result.
+
+    Are you ready to start comparing your documents in a whole new way? Let's get started with HADES! 🤗
+
+    """
+)
 
 with st.sidebar:
     selected_section = st.selectbox("Select section", config.SECTIONS, index=0)
@@ -221,7 +239,7 @@ with sc1:
                 use_container_width=True,
         )
 with sc2:
-    st.markdown("#"); st.markdown("#"); st.markdown("#"); st.markdown("#"); st.markdown("#"); st.markdown("#")
+    st.markdown(f"""</br></br></br></br></br></br>""", unsafe_allow_html=True)
     st.metric("Number of clusters", len(np.unique(labels)))
     pval = utils.manova_significant_difference_pval(
         topics.iloc[:, 1:], labels
@@ -235,9 +253,20 @@ with sc2:
             "{:.6f}".format(round(pval, 6)),
         )
     if config.COUNTRIES_DIVISION:
-        st.markdown("#"); st.markdown("#"); st.markdown("#"); st.markdown("#"); st.markdown("#"); st.markdown("#")
+        st.markdown(f"""</br></br>""", unsafe_allow_html=True)
 
+
+st.markdown(
+    """
+    Below you can find three bookmarks: 
+    - Document details will provide a summary of the selected section (left panel) for a given country. Then for each section topic, you can check the most important sentences; colored words mean there were essential in assigning topics. The higher the number next to the word, the more important it is. At the bottom of the page, you can compare multiple documents with each other. 
+    - In the Topic details section, you will find an interactive topic map with relevant important words and keywords for each topic
+    - Additional data comparison section shows comparison to data like geopolitical factors
+    """
+)
 tabs = st.tabs(["Document details", "Topic details", "Additional data comparision"])
+
+
 with tabs[0]:
     selected_document = st.selectbox("Select document", sorted(topics[config.DIVISION_COLUMN].unique()), index=0)
     st.header(f"Document details: {selected_document}")
@@ -255,20 +284,23 @@ with tabs[0]:
         if selected_topic == topic:
             topic_num = idx
     st.markdown(f"""<h4 style="padding-top: 0px;">Essential sentences:</h4>""", unsafe_allow_html=True)
+    ess_words = list(essential_sentences[selected_document][str(topic_num)]['words'].keys())
     for i in range(3):   
-        ess_words = list(essential_sentences[selected_document][str(topic_num)]['words'].keys())
         ess_sentence = essential_sentences[selected_document][str(topic_num)]['sentences'][i][0]
         ess_sentence_splitted = ess_sentence.split()
-        html_sentence = "<p>"
+        sentence = [f"{i+1}. "]
         for word in ess_sentence_splitted:
             word_en = st.session_state.en(word)
             is_imp = bool(word_en[0].lemma_ in ess_words)
             if is_imp:
-                html_sentence = html_sentence + " <span class='imp_word'>" + word + "</span>"
+                sentence.append((
+                    str(word),
+                    str(np.round(100*essential_sentences[selected_document][str(topic_num)]['words'][word_en[0].lemma_], 2)),
+                    "#afa"))
             else:
-                html_sentence = html_sentence + " " + word
-        html_sentence = html_sentence + "</p>"
-        st.markdown(f"""{html_sentence}""", unsafe_allow_html=True)
+                sentence.append(str(word + " "))
+        annotated_text(*sentence)
+        st.markdown(f"""</br>""", unsafe_allow_html=True)
 
     st.header(f"Compare documents")
     selected_entities = st.multiselect(
@@ -299,6 +331,7 @@ with tabs[0]:
             use_container_width=True,
             width=500,
         )
+
 
 with tabs[1]:
     st.header("Topic analysis")
@@ -389,8 +422,7 @@ with tabs[2]:
             corr_df = corr_df.drop(selected_columns, axis=1)
             corr_df = corr_df.drop(selected_columns_additional, axis=0)
         with heatmap_plot_col:
-            st.markdown("#")
-            st.markdown("#")
+            st.markdown(f"""</br></br></br>""", unsafe_allow_html=True)
             st.pyplot(utils.plot_correlation_heatmap(corr_df))
     else:
         st.write("There aren't any additional files defined")
