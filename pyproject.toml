@@ -30,6 +30,8 @@ openai = "^0.23.0"
 umap-learn = "^0.5.3"
 llvmlite = "0.39.1"
 streamlit = "1.16.0"
+contextualized-topic-models = "^2.4.2"
+st-annotated-text = "^3.0.0"
 
 [tool.poetry.dev-dependencies]
 plotly = "^5.9.0"
