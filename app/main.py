@@ -88,7 +88,7 @@ st.markdown(
 )
 
 
-st.markdown("# Welcome to CompaDoc")
+st.markdown("# Welcome to HADES")
 st.markdown("#### A powerful tool for comparing similarly structured documents")
 st.markdown(
     """
@@ -96,7 +96,7 @@ st.markdown(
 
     Take a look at the plot below to see the results of our clustering analysis. The number of clusters shows you how we group your documents, and the MANOVA p value indicates the quality of the grouping. A p value lower than 0.05 is considered a good result.
 
-    Are you ready to start comparing your documents in a whole new way? Let's get started with CompaDoc! 🤗
+    Are you ready to start comparing your documents in a whole new way? Let's get started with HADES! 🤗
 
     """
 )
