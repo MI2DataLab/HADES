@@ -88,8 +88,8 @@ st.markdown(
 )
 
 
-st.markdown("# Welcome to HADES")
-st.markdown("#### A powerful tool for comparing similarly structured documents")
+st.markdown("# Welcome to HADES!")
+st.markdown("#### Homologous Automated Document Exploration and Summarization - A powerful tool for comparing similarly structured documents")
 st.markdown(
     """
     On the left-hand side of the screen, you can select from different sections to access a range of options for data mapping, clustering, and metrics. Click on this link to learn more about our methods.
