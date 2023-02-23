@@ -1,13 +1,9 @@
-import warnings
-from typing import Callable, Dict, List, Tuple, Union
+from typing import Callable, Dict, List, Union
 
 import numpy as np
 import pandas as pd
 import scipy.cluster.hierarchy as hc
 import scipy.spatial as sp
-from gensim.corpora.dictionary import Dictionary
-from gensim.models import LdaModel
-
 
 
 def calculate_linkage_matrix(

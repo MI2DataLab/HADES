@@ -1,13 +1,14 @@
 import os
 from typing import List
-import joblib
 
+import joblib
 import pandas as pd
 import pycountry
 import spacy
 from gensim.models import Phrases
 
-from .utils import _multiply_ngrams, get_filtered_tokens, process_lemmas, process_tokens
+from .utils import (_multiply_ngrams, get_filtered_tokens, process_lemmas,
+                    process_tokens)
 
 
 def read_txt(path: str) -> str:

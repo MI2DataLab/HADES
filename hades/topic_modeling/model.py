@@ -1,11 +1,12 @@
+from typing import List, Tuple, Union
+
+import numpy as np
+import pandas as pd
+from contextualized_topic_models.models.ctm import CombinedTM
+from contextualized_topic_models.utils.data_preparation import \
+    TopicModelDataPreparation
 from gensim import models
 from gensim.corpora.dictionary import Dictionary
-from contextualized_topic_models.models.ctm import CombinedTM
-from contextualized_topic_models.utils.data_preparation import TopicModelDataPreparation
-
-from typing import List, Tuple, Union
-import pandas as pd
-import numpy as np
 
 
 class Model:

@@ -1,11 +1,14 @@
 import os
 import re
 from typing import Dict, List, Optional, Tuple
-from data_preprocessing.data_cleaning import text_cleaning
+
 import pandas as pd
 import spacy
-from spacy.tokens import Doc, Token
 from PyPDF2 import PdfReader
+from spacy.tokens import Doc, Token
+
+from hades.data_preprocessing.data_cleaning import text_cleaning
+
 
 def process_tokens(
         doc: pd.Series, nlp: spacy.language.Language, stop_words: List[str]

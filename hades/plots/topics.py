@@ -1,6 +1,6 @@
 from typing import List, Optional, Tuple
-import numpy as np
 
+import numpy as np
 import pandas as pd
 import pyLDAvis.gensim_models
 import seaborn as sns
@@ -8,7 +8,8 @@ from gensim.corpora.dictionary import Dictionary
 from gensim.models import LdaModel
 from matplotlib import colors
 from matplotlib import pyplot as plt
-from topic_modeling.utils import _topics_df
+
+from hades.topic_modeling.utils import _topics_df
 
 pyLDAvis.enable_notebook()
 

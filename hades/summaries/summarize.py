@@ -1,7 +1,8 @@
+import json
+
+import openai
 import pandas as pd
 from summarizer import Summarizer
-import openai
-import json
 
 model = Summarizer()
 
@@ -36,9 +37,9 @@ def make_summary(text: str, n_extract_sentences: int, api_key: str, openai_organ
     return summary
 
 
-def prepare_app_summaries(df: pd.DataFrame, n_extract_sentences: int, dump_path: str,  api_key: str, openai_organization: str, verbose=False):
+def prepare_app_summaries(df: pd.DataFrame, divide_column: str, n_extract_sentences: int, dump_path: str,  api_key: str, openai_organization: str, verbose=False):
     final_summaries = dict()
-    paragraphs = list(set(df['paragraph']))
+    paragraphs = list(set(df[divide_column]))
     # TODO: change to ids
     ids = list(set(df['country']))
     for paragraph in paragraphs:
@@ -47,7 +48,7 @@ def prepare_app_summaries(df: pd.DataFrame, n_extract_sentences: int, dump_path:
             if verbose:
                 print(f'Paragraph: {paragraph}, id: {id}')
             try:
-                text_path = df[(df['paragraph'] == paragraph) & (df['country'] == id)]['text_path'].values[0]
+                text_path = df[(df[divide_column] == paragraph) & (df['country'] == id)]['text_path'].values[0]
                 text_path = text_path.strip('../')
                 with open(text_path, 'r') as f:
                     text = f.read()
