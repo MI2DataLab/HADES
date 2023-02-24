@@ -17,6 +17,35 @@ from ..utils import (get_filtered_lemmas, get_lemmas_dictionary,
 
 
 class ModelOptimizer:
+    """
+    Class for optimizing topic modeling parameters.
+
+    Parameters
+    ----------
+    df: pd.DataFrame
+        Data frame with text data.
+    id_column: str
+        Name of the column with document ids.
+    section_column: str
+        Name of the column with section names.
+    column_filter: Dict[str, str]
+        Dictionary with column names and values to filter data frame.
+    model_type: str, default "lda"
+        Type of topic modeling model. Can be "lda", "lsi", "hdp", "rp", "nmf", "d2v".
+    words_to_remove: List[str], default []
+        List of words to remove from text data.
+    topic_numbers_range: Tuple[int, int], default (2, 11)
+        Range of topic numbers to try.
+    coherence_measure: str, default "c_v"
+        Coherence measure to use. Can be "c_v", "c_uci", "c_npmi", "u_mass".
+    coherence_num_words: int, default 20
+        Number of words used for calculating coherence measure.
+    random_state: Optional[int], default None
+        Random state for reproducibility.
+    **kwargs:
+        Additional parameters for topic modeling model.
+
+    """
     def __init__(
             self,
             df: pd.DataFrame,
@@ -27,7 +56,7 @@ class ModelOptimizer:
             words_to_remove: List[str] = [],
             topic_numbers_range: Tuple[int, int] = (2, 11),
             coherence_measure: str = "c_v",
-            coherence_num_words: int = 20,  # number of words used for calculating coherence measure
+            coherence_num_words: int = 20,
             random_state: Optional[int] = None,
             **kwargs):
         self.model_type = model_type

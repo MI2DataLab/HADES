@@ -29,6 +29,39 @@ def save_data_for_app(
     n_extract_sentences: int = 6,
     do_summaries: bool = True,
 ):
+    """
+    Saves data for app in path. After saving, the app can be started with the command: hades run-app --config 'path + "config.json"'.
+    
+    Args:
+        model_optimizers: List[ModelOptimizer]
+            List of model_optimizers to save data for, each for a different section.
+        path: str
+            Path to save data to.
+        num_words: int = 10
+            Number of words to save for each topic.
+        perplexity: int = 10
+            Perplexity for tsne.
+        n_iter: int = 1000
+            Number of iterations for tsne.
+        init: str = "pca"
+            Initialization for tsne.
+        learning_rate_tsne: Union[str, float] = "auto"
+            Learning rate for tsne.
+        n_neighbors: int = 7
+            Number of neighbors for umap.
+        metric: str = "euclidean"
+            Metric for umap.
+        min_dist: float = 0.1
+            Minimum distance for umap.
+        learning_rate_umap: float = 1
+            Learning rate for umap.
+        save_model: bool = False
+            If True, the model is saved.
+        n_extract_sentences: int = 6
+            Number of sentences to extract for each document.
+        do_summaries: bool = True
+            If True, summaries are generated.
+    """
     if len(model_optimizers) == 0:
         warnings.warn(
                 """
