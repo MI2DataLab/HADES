@@ -58,7 +58,7 @@ def load_essentials(file_path: str) -> json:
 
 
 @click.command()
-@click.option('--config-path', default='dupa', help='Path to config.json file.')
+@click.option('--config-path', default='config.json', help='Path to config.json file.')
 def main(config_path: str):
     config = Config(config_path)
     if 'en' not in st.session_state:
