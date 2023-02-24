@@ -2,6 +2,7 @@ import json
 import os
 from typing import List, Optional, Union
 import warnings
+
 warnings.simplefilter(action='ignore', category=FutureWarning)
 import pandas as pd
 import openai
@@ -35,63 +36,42 @@ def save_data_for_app(
     Saves data for app in path. After saving, the app can be started with the command: hades run-app --config 'path + "config.json"'.
     
     Args:
-        model_optimizers: List[ModelOptimizer]
-            List of model_optimizers to save data for, each for a different section.
-        path: str
-            Path to save data to.
-        num_words: int = 10
-            Number of words to save for each topic.
-        perplexity: int = 10
-            Perplexity for tsne.
-        n_iter: int = 1000
-            Number of iterations for tsne.
-        init: str = "pca"
-            Initialization for tsne.
-        learning_rate_tsne: Union[str, float] = "auto"
-            Learning rate for tsne.
-        n_neighbors: int = 7
-            Number of neighbors for umap.
-        metric: str = "euclidean"
-            Metric for umap.
-        min_dist: float = 0.1
-            Minimum distance for umap.
-        learning_rate_umap: float = 1
-            Learning rate for umap.
-        save_model: bool = False
-            If True, the model is saved.
-        n_extract_sentences: int = 6
-            Number of sentences to extract for each document.
-        do_summaries: bool = True
-            If True, summaries are generated.
+        model_optimizers (List[ModelOptimizer]): List of model_optimizers to save data for, each for a different section.
+        path (str): Path to save data to.
+        num_words (int): Number of words to save for each topic. Defaults to 10.
+        perplexity (int): Perplexity for tsne. Defaults to 10.
+        n_iter (int): Number of iterations for tsne. Defaults to 1000.
+        init (str): Initialization for tsne. Defaults to "pca".
+        learning_rate_tsne (Union[str, float]): Learning rate for tsne. Defaults to "auto".
+        n_neighbors (int): Number of neighbors for umap. Defaults to 7.
+        metric (str): Metric for umap. Defaults to "euclidean".
+        min_dist (float): Minimum distance for umap. Defaults to 0.1.
+        learning_rate_umap (float): Learning rate for umap. Defaults to 1.
+        save_model (bool): If True, model is saved. Defaults to False.
+        n_extract_sentences (int): Number of sentences to extract for summary. Defaults to 6.
+        do_summaries (bool): If True, summaries are made. Defaults to True.
     """
     if len(model_optimizers) == 0:
-        warnings.warn(
-                """
+        warnings.warn("""
                 empty list of model_optimizers - aborting...
                 
-                """
-            )
+                """)
         return
     id_column = model_optimizers[0].id_column
     section_column = model_optimizers[0].section_column
     for model_optimizer in model_optimizers:
         if model_optimizer.id_column != id_column:
-            warnings.warn(
-                """
+            warnings.warn("""
                 id_columns don't mach - aborting...
                 
-                """
-            )
+                """)
             return
         elif model_optimizer.section_column != section_column:
-            warnings.warn(
-                """
+            warnings.warn("""
                 section_columns don't mach - aborting...
                 
-                """
-            )
+                """)
             return
-        
 
     os.makedirs(path, exist_ok=True)
     config_dict = {}
@@ -138,11 +118,12 @@ def save_data_for_app(
         mappings = tsne_mapping.join(umap_mapping)
         mappings.to_csv(path + filter_name + "_mapping.csv")
         if model_optimizer.best_model.model_type == "lda":
-            vis = interactive_exploration(model_optimizer.best_model.int_model, model_optimizer.encoded_docs, model_optimizer.lemmas_dictionary)
+            vis = interactive_exploration(model_optimizer.best_model.int_model, model_optimizer.encoded_docs,
+                                          model_optimizer.lemmas_dictionary)
             vis_html_string = prepared_data_to_html(vis)
         with open(path + filter_name + "_vis.txt", "w") as text_file:
             text_file.write(vis_html_string)
-        
+
         sentence_topic_analyser = SentenceTopicAnalyser(model_optimizer)
         df_summarized = model_optimizer.data.groupby(id_column)['tokens'].sum()
         sentences_processed = sentence_topic_analyser.process_documents(df_summarized)

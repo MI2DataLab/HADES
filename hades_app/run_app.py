@@ -14,7 +14,7 @@ def cli():
 @click.option('--port', '-p', type=int, default=8501, help='Port number to run the app on.')
 @click.option('--config', '-c', type=click.Path(exists=True), help='Path to config.json file.')
 def run_app(port, config):
-    """Run the app."""
+    """Run the app based on the provided config file."""
     path_to_main = os.path.join(os.path.dirname(__file__), "main.py")
     cmd = [sys.executable, "-m", "streamlit", "run", "--server.port", str(port), path_to_main]
 
