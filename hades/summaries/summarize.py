@@ -3,6 +3,9 @@ import json
 import openai
 import pandas as pd
 from summarizer import Summarizer
+import warnings
+
+from hades.topic_modeling.model_optimizer import ModelOptimizer
 
 model = Summarizer()
 
@@ -12,56 +15,79 @@ def extract_n_most_important_sentences(text: str, n_of_sentences: int):
     return result
 
 
-def abstractive_summary(extractive_summary: str, api_key: str, openai_organization: str,
-                        gpt3_model: str = "text-davinci-002", temperature: int = 0.7):
-    openai.api_key = api_key
-    openai.organization = openai_organization
+def abstractive_summary(
+    extractive_summary: str,
+    gpt3_model: str = "text-davinci-003", 
+    temperature: int = 0.7
+):
     prompt = extractive_summary + ' Summarize the text above in three sentences: \n'
-    response = openai.Completion.create(model=gpt3_model, prompt=prompt, temperature=temperature, max_tokens=120)
+    response = openai.Completion.create(
+        model=gpt3_model,
+        prompt=prompt,
+        temperature=temperature,
+        max_tokens=120
+    )
     return response['choices'][0]['text']
 
 
-def make_summary(text: str, n_extract_sentences: int, api_key: str, openai_organization: str):
+def make_summary(text: str, n_extract_sentences: int):
     """
     Function making abstractive summaries out of previously extracted most important sentences
     Args:
         text:
         n_extract_sentences: Number of sentences to extract
-        api_key: OpenAI API key
-        openai_organization: OpenAI organization name
     Returns:
         summary: abstractive summary
     """
+    if openai.api_key == None:
+        warnings.warn(
+            """
+            Summary can't be made: no api key set;
+            Key can be set using function set_openai_key(key)
+            """
+        )
+        return
     extracted_sentences = extract_n_most_important_sentences(text, n_extract_sentences)
-    summary = abstractive_summary(extracted_sentences, api_key, openai_organization)
+    summary = abstractive_summary(extracted_sentences)
     return summary
 
 
-def prepare_app_summaries(df: pd.DataFrame, divide_column: str, n_extract_sentences: int, dump_path: str,  api_key: str, openai_organization: str, verbose=False):
+def prepare_app_summaries(
+    model_optimizer: ModelOptimizer,
+    n_extract_sentences: int,
+    dump_path: str,
+    verbose=False
+):
+    if openai.api_key == None:
+        warnings.warn(
+            """
+            Summaries can't be made: no api key set;
+            Key can be set using function set_openai_key(key)
+            """
+        )
+        return
     final_summaries = dict()
-    paragraphs = list(set(df[divide_column]))
-    # TODO: change to ids
-    ids = list(set(df['country']))
-    for paragraph in paragraphs:
-        paragraph_dict = dict()
+    data = model_optimizer.data
+    sections = list(set(data[model_optimizer.section_column]))
+    ids = list(set(data[model_optimizer.id_column]))
+    for section in sections:
+        section_dict = dict()
         for id in ids:
             if verbose:
-                print(f'Paragraph: {paragraph}, id: {id}')
+                print(f'Section: {section}, id: {id}')
             try:
-                text_path = df[(df[divide_column] == paragraph) & (df['country'] == id)]['text_path'].values[0]
-                text_path = text_path.strip('../')
-                with open(text_path, 'r') as f:
-                    text = f.read()
-                summary = make_summary(text, n_extract_sentences, api_key, openai_organization)
+                text = data[(data[model_optimizer.section_column] == section)
+                            & (data[model_optimizer.id_column] == id)]['text'].values[0]
+                summary = make_summary(text, n_extract_sentences)
                 summary = summary.strip('\n')
             except:
                 if verbose:
-                    print(f'No text for paragraph: {paragraph}, id: {id}')
+                    print(f'No text for section: {section}, id: {id}')
                 summary = 'This section is not available for given ID'
-            paragraph_dict[id] = summary
+            section_dict[id] = summary
             if verbose:
                 print(f'Summary: {summary}')
-        final_summaries[paragraph] = paragraph_dict
+        final_summaries[section] = section_dict
 
     # Saving summaries to json file
     with open(dump_path, 'w') as fp:

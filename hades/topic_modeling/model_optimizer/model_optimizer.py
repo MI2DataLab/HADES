@@ -20,6 +20,8 @@ class ModelOptimizer:
     def __init__(
             self,
             df: pd.DataFrame,
+            id_column: str,
+            section_column: str,
             column_filter: Dict[str, str],
             model_type: str = "lda",
             words_to_remove: List[str] = [],
@@ -29,6 +31,8 @@ class ModelOptimizer:
             random_state: Optional[int] = None,
             **kwargs):
         self.model_type = model_type
+        self.id_column = id_column
+        self.section_column = section_column
         self.column_filter = column_filter
         self.random_state = random_state
         self.coherence_measure = coherence_measure
@@ -69,10 +73,12 @@ class ModelOptimizer:
 
     def get_topic_probs_averaged_over_column(
         self,
-        column: str = "country",
+        column: Optional[str] = None,
         show_names: bool = False,
     ) -> pd.DataFrame:
         """Returns topic probabilities averaged over given column."""
+        if not column:
+            column = self.id_column
         modeling_results = self.get_topic_probs_df()
         result = []
         column_vals_added = []
@@ -95,24 +101,28 @@ class ModelOptimizer:
 
     def get_tsne_mapping(
         self,
-        column: str = "country",
+        column: Optional[str] = None,
         perplexity: int = 40,
         n_iter: int = 1000,
         init: str = "pca",
         learning_rate: Union[str, float] = "auto",
     ):
+        if not column:
+            column = self.id_column
         topics_by_country = self.get_topic_probs_averaged_over_column(column)
         mapping = tsne_dim_reduction(topics_by_country, self.random_state, perplexity, n_iter, init, learning_rate)
         return mapping
 
     def get_umap_mapping(
         self,
-        column: str = "country",
+        column: Optional[str] = None,
         n_neighbors: int = 7,
         metric: str = "euclidean",
         min_dist: float = 0.1,
         learning_rate: float = 1,
     ):
+        if not column:
+            column = self.id_column
         topics_by_country = self.get_topic_probs_averaged_over_column(column)
         mapping = umap_dim_reduction(
             topics_by_country,
@@ -139,7 +149,15 @@ class ModelOptimizer:
         gpt3_model: str = "text-davinci-003",
         temperature: int = 0.5,
     ) -> pd.DataFrame:
-        openai.api_key = os.getenv("OPENAI_API_KEY")
+        if openai.api_key == None:
+            warnings.warn(
+                """
+                Topic names not updated: no api key set;
+                Key can be set using function set_openai_key(key)
+                Organization can be set using function set_openai_organization(organization)
+                """
+            )
+            return
         topics_keywords = self.get_topics_df(num_keywords)
         exculded = []
         for i in range(self.topics_num):
@@ -202,6 +220,10 @@ def get_coherences(
                                    coherence=coherence).get_coherence()
         for num_topics, model in tqdm(models.items())
     }
+
+
+def set_openai_key(key: str):
+    openai.api_key = key
 
 
 def _generate_prompt(keywords: list, weights: list, excluded: list = []) -> str:

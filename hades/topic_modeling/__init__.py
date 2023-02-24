@@ -1,1 +1,1 @@
-from .model_optimizer import ModelOptimizer, save_data_for_app
+from .model_optimizer import ModelOptimizer, save_data_for_app, set_openai_key

@@ -238,7 +238,7 @@ def main(config_path: str):
                 )
         else:
             st.plotly_chart(
-                    utils.plot_clusters(topics, mapping, labels, x, y, try_flags=False, text=config.DIVISION_COLUMN),
+                    utils.plot_clusters(topics, mapping, labels, x, y, try_flags=False, text=config.ID_COLUMN),
                     config=config.DEFAULT_CONFIG,
                     use_container_width=True,
             )
@@ -272,7 +272,7 @@ def main(config_path: str):
 
 
     with tabs[0]:
-        selected_document = st.selectbox("Select document", sorted(topics[config.DIVISION_COLUMN].unique()), index=0)
+        selected_document = st.selectbox("Select document", sorted(topics[config.ID_COLUMN].unique()), index=0)
         st.header(f"Document details: {selected_document}")
 
         st.markdown(f"""<h4 style="padding-top: 0px;">Section summary:</h4>""", unsafe_allow_html=True)
@@ -309,8 +309,8 @@ def main(config_path: str):
         st.header(f"Compare documents")
         selected_entities = st.multiselect(
             label="Select document",
-            options=sorted(topics[config.DIVISION_COLUMN].unique()),
-            default=sorted(topics[config.DIVISION_COLUMN].unique())[:2],  # assumption that there are two entities
+            options=sorted(topics[config.ID_COLUMN].unique()),
+            default=sorted(topics[config.ID_COLUMN].unique())[:2],  # assumption that there are two entities
         )
         radar_col, topic_dist_col = st.columns(2)
         with radar_col:
@@ -388,7 +388,7 @@ def main(config_path: str):
             heatmap_params_col, heatmap_plot_col = st.columns(2)
             with heatmap_params_col:
                 topics_additional = topics.copy()
-                topics_additional[config.DIVISION_COLUMN] = topics_additional[config.DIVISION_COLUMN].apply(
+                topics_additional[config.ID_COLUMN] = topics_additional[config.ID_COLUMN].apply(
                     lambda x: x.lower()
                 )
                 num_topics = len(topics_additional.columns)-1
@@ -404,7 +404,7 @@ def main(config_path: str):
                     index=0,
                 )
                 df_selected = deepcopy(additional_dfs[selected_data])
-                df_selected[config.DIVISION_COLUMN] = df_selected[config.DIVISION_COLUMN].apply(lambda x: x.lower())
+                df_selected[config.ID_COLUMN] = df_selected[config.ID_COLUMN].apply(lambda x: x.lower())
                 default = list(df_selected.columns[1:])[0]
                 
                 selected_columns_additional = st.multiselect(
@@ -412,10 +412,10 @@ def main(config_path: str):
                     list(df_selected.columns[1:]),
                     default=default,
                 )
-                merged_df = topics_additional[selected_columns + [config.DIVISION_COLUMN]].merge(
-                    df_selected[selected_columns_additional + [config.DIVISION_COLUMN]],
+                merged_df = topics_additional[selected_columns + [config.ID_COLUMN]].merge(
+                    df_selected[selected_columns_additional + [config.ID_COLUMN]],
                     how="left",
-                    on=config.DIVISION_COLUMN,
+                    on=config.ID_COLUMN,
                 )
                 selected_method = st.selectbox(
                     "Select correlation method",

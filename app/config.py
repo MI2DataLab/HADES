@@ -2,7 +2,7 @@ import json
 
 ## Data settings
 COUNTRIES_DIVISION = False
-DIVISION_COLUMN = None
+ID_COLUMN = None
 SETTINGS_DICT = None
 SECTIONS = None
 MAPPINGS = ["tSNE", "UMAP"]
@@ -36,11 +36,11 @@ DEFAULT_CONFIG = {
 def load_settings_dict(path):
     global SETTINGS_DICT
     global SECTIONS
-    global DIVISION_COLUMN
+    global ID_COLUMN
     global COUNTRIES_DIVISION
     with open(path) as f:
         SETTINGS_DICT = json.load(f)
     SECTIONS = list(SETTINGS_DICT["sections"].keys())
-    DIVISION_COLUMN = SETTINGS_DICT["division_column"]
-    COUNTRIES_DIVISION = DIVISION_COLUMN.lower() == "country"
+    ID_COLUMN = SETTINGS_DICT["id_column"]
+    COUNTRIES_DIVISION = ID_COLUMN.lower() == "country"
     

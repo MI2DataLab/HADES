@@ -128,8 +128,19 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-climate_results/
+resilience_results/
 social_results/
+necp_results/
+necp_results_flat/
+resilience_reports/
+social_reports/
+necp_reports/
+necp_reports_flat/
+
+make_summaries.py
+necp_flow.ipynb
+resilience_flow.ipynb
+social_flow.ipynb
 
 # MacOS hidden files
 *.DS_Store
