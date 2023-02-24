@@ -1,12 +1,13 @@
 [tool.poetry]
 name = "hades-nlp"
 version = "0.1.0"
-description = ""
+description = "Homologous Automated Document Exploration and Summarization - A powerful tool for comparing similarly structured documents"
 authors = ["arturzolkowski <artur.zolkowski@wp.pl>"]
 packages = [
     { include = "hades"},
     { include = "hades_app"},
 ]
+readme = "README.md"
 
 [tool.poetry.scripts]
 hades = "hades_app.run_app:cli"
