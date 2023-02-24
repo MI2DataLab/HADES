@@ -10,61 +10,46 @@ from hades.topic_modeling.model_optimizer import ModelOptimizer
 model = Summarizer()
 
 
-def extract_n_most_important_sentences(text: str, n_of_sentences: int):
+def extract_n_most_important_sentences(text: str, n_of_sentences: int) -> str:
+    """Function extracting n most important sentences from text using BERT model"""
     result = model(text, num_sentences=n_of_sentences)
     return result
 
 
-def abstractive_summary(
-    extractive_summary: str,
-    gpt3_model: str = "text-davinci-003", 
-    temperature: int = 0.7
-):
+def abstractive_summary(extractive_summary: str, gpt3_model: str = "text-davinci-003", temperature: int = 0.7) -> str:
+    """Function making abstractive summaries out of previously extracted most important sentences"""
     prompt = extractive_summary + ' Summarize the text above in three sentences: \n'
-    response = openai.Completion.create(
-        model=gpt3_model,
-        prompt=prompt,
-        temperature=temperature,
-        max_tokens=120
-    )
+    response = openai.Completion.create(model=gpt3_model, prompt=prompt, temperature=temperature, max_tokens=120)
     return response['choices'][0]['text']
 
 
-def make_summary(text: str, n_extract_sentences: int):
+def make_summary(text: str, n_extract_sentences: int) -> str:
     """
     Function making abstractive summaries out of previously extracted most important sentences
     Args:
-        text:
-        n_extract_sentences: Number of sentences to extract
+        text (str): text to summarize
+        n_extract_sentences (int): Number of sentences to extract
     Returns:
-        summary: abstractive summary
+        summary (str): abstractive summary
     """
     if openai.api_key == None:
-        warnings.warn(
-            """
+        warnings.warn("""
             Summary can't be made: no api key set;
             Key can be set using function set_openai_key(key)
-            """
-        )
+            """)
         return
     extracted_sentences = extract_n_most_important_sentences(text, n_extract_sentences)
     summary = abstractive_summary(extracted_sentences)
     return summary
 
 
-def prepare_app_summaries(
-    model_optimizer: ModelOptimizer,
-    n_extract_sentences: int,
-    dump_path: str,
-    verbose=False
-):
+def prepare_app_summaries(model_optimizer: ModelOptimizer, n_extract_sentences: int, dump_path: str, verbose=False):
+    """Prepare summaries for ready to use in app and save them to json file"""
     if openai.api_key == None:
-        warnings.warn(
-            """
+        warnings.warn("""
             Summaries can't be made: no api key set;
             Key can be set using function set_openai_key(key)
-            """
-        )
+            """)
         return
     final_summaries = dict()
     data = model_optimizer.data

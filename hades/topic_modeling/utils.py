@@ -14,6 +14,7 @@ def get_filtered_lemmas(
     df: pd.DataFrame,
     common_words_filtered: List[str],
 ) -> pd.Series:
+    """Filter out common words from lemmas"""
     filtered_lemmas = df["lemmas"].copy()
     filtered_lemmas = filtered_lemmas.apply(
         lambda doc: [lemma for lemma in doc if not (lemma in common_words_filtered)]
@@ -21,7 +22,8 @@ def get_filtered_lemmas(
     return filtered_lemmas
 
 
-def get_lemmas_dictionary(filtered_lemmas: pd.Series):
+def get_lemmas_dictionary(filtered_lemmas: pd.Series) -> Dictionary:
+    """Create a dictionary from the filtered lemmas"""
     lemmas_dictionary = Dictionary(filtered_lemmas)
     lemmas_dictionary.filter_extremes(no_below=4, no_above=1)
     lemmas_dictionary.filter_extremes()
@@ -30,6 +32,7 @@ def get_lemmas_dictionary(filtered_lemmas: pd.Series):
 
 
 def _topics_df(model: LdaModel, docs: pd.Series, num_words: int = 10) -> pd.DataFrame:
+    """Create a dataframe with the topics and their words and weights"""
     topics = model.show_topics(formatted=False, num_words=num_words)
     counter = Counter(docs.sum())
     out = [[word, i, weight, counter[word]] for i, topic in topics for word, weight in topic]
@@ -46,6 +49,7 @@ def tsne_dim_reduction(
     init: str = "pca",
     learning_rate: Union[str, float] = "auto",
 ) -> pd.DataFrame:
+    """Reduce the dimensionality of the result dataframe using t-SNE"""
     tsne_result_df = result_df.copy()
     perplexity = min(perplexity, result_df.shape[0] - 1)
     tsne = TSNE(
@@ -71,6 +75,7 @@ def umap_dim_reduction(
     min_dist: float = 0.1,
     learning_rate: float = 1,
 ) -> pd.DataFrame:
+    """Reduce the dimensionality of the result dataframe using UMAP"""
     umap_result_df = result_df.copy()
     umap = UMAP(
         n_neighbors=n_neighbors,

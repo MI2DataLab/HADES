@@ -59,12 +59,8 @@ def plot_topics(
             ax_twin.set_ylim(0, ylim_weight)
         if ylim_count is not None:
             ax.set_ylim(0, ylim_count)
-        ax.set_title(
-            "Topic: " + str(topics_names[i] if topics_names else i), color=cols[i], fontsize=12
-        )
-        ax.set_xticklabels(
-            df.loc[df.topic_id == i, "word"], rotation=30, horizontalalignment="right"
-        )
+        ax.set_title("Topic: " + str(topics_names[i] if topics_names else i), color=cols[i], fontsize=12)
+        ax.set_xticklabels(df.loc[df.topic_id == i, "word"], rotation=30, horizontalalignment="right")
         ax.legend(loc="upper right")
         ax_twin.legend(loc="lower right")
         ax.grid(False)
@@ -120,9 +116,7 @@ def plot_tsne(
     save_path: Optional[str] = None,
 ):
     plt.figure(figsize=(12, 10))
-    fig = sns.scatterplot(
-        x="c1", y="c2", data=tsne_result_df, legend=False, hue=hue, palette=palette
-    )
+    fig = sns.scatterplot(x="c1", y="c2", data=tsne_result_df, legend=False, hue=hue, palette=palette)
     for line in range(0, tsne_result_df.shape[0]):
         fig.text(
             tsne_result_df.c1[line] + 0.01,

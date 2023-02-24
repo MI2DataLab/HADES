@@ -11,6 +11,7 @@ from spacy.tokens import Doc, Token
 def process_tokens(
         doc: pd.Series, nlp: spacy.language.Language, stop_words: List[str]
 ) -> List[str]:
+    """Processes the tokens in a document. Removes stop words, punctuation and non-alphabetic tokens."""
     spacy_text = nlp(doc)
     return [
         token
@@ -19,6 +20,7 @@ def process_tokens(
     ]
 
 def get_filtered_tokens(spacy_text: Doc, stop_words: List[str]) -> List[Token]:
+    """Processes the tokens in a document. Removes stop words, punctuation and non-alphabetic tokens."""
     return [
         token
         for token in spacy_text
@@ -27,10 +29,12 @@ def get_filtered_tokens(spacy_text: Doc, stop_words: List[str]) -> List[Token]:
 
 
 def process_lemmas(doc: pd.Series) -> List[str]:
+    """Makes tokens lemma lower case."""
     return [token.lemma_.lower() for token in doc]
 
 
 def _multiply_ngrams(tokens: List[str]):
+    """Generator that yields tokens, one time for standard token, three times for ngram. Used to multiply ngrams."""
     for token in tokens:
         if " " in token:
             yield token
@@ -39,6 +43,7 @@ def _multiply_ngrams(tokens: List[str]):
 
 
 def get_table_of_contents(path: str, toc: str = "Table of Contents") -> Tuple[str, int]:
+    """Returns the table of contents of a pdf file and the page number of the table of contents."""
     file = open(path, "rb")
     fileReader = PdfReader(file)
     text = ""
@@ -58,6 +63,18 @@ def get_table_of_contents(path: str, toc: str = "Table of Contents") -> Tuple[st
 def get_paragraphs_df(
         toc: str, pages_shift: int, paragraphs_names: Dict[str, List[str]], end_paragraph: str
 ) -> pd.DataFrame:
+    """Based on the table of contents, returns a dataframe with the paragraphs and the pages they start and end on.
+
+    Args:
+        toc (str): table of contents of the pdf file.
+        pages_shift (int): number of pages to shift the page numbers.
+        paragraphs_names (Dict[str, List[str]]): dictionary with the paragraphs names.
+        end_paragraph (str): name of the last paragraph.
+
+    Returns:
+        pd.DataFrame: dataframe with the paragraphs and the pages they start and end on.
+
+    """
     lines = toc.split("\n")
     rows = {"paragraph": [], "start_page": [], "end_page": [], "start_text": [], "end_text": []}
     for key, paragraphs in paragraphs_names.items():
@@ -98,6 +115,7 @@ def get_paragraphs_df(
 
 
 def read_pages_from_pdf(path: str, start_page: int, end_page: int) -> str:
+    """Reads the text from a pdf file from start_page to end_page."""
     file = open(path, "rb")
     fileReader = PdfReader(file)
     text = ""
@@ -119,6 +137,7 @@ def read_paragraphs(
         id: str,
         root: str = ""
 ) -> pd.DataFrame:
+    """Reads paragraphs from a pdf file and saves them as txt files."""
     result_dict = {"paragraph": [], id_column: [], "text_path": []}
     for i, row in df.iterrows():
         file_name = row.paragraph.replace(":","").replace(" ","_").replace(

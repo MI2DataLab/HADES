@@ -12,8 +12,7 @@ from gensim.models import CoherenceModel
 from tqdm import tqdm
 
 from ..model import Model
-from ..utils import (get_filtered_lemmas, get_lemmas_dictionary,
-                     tsne_dim_reduction, umap_dim_reduction)
+from ..utils import (get_filtered_lemmas, get_lemmas_dictionary, tsne_dim_reduction, umap_dim_reduction)
 
 
 class ModelOptimizer:
@@ -44,21 +43,19 @@ class ModelOptimizer:
         Random state for reproducibility.
     **kwargs:
         Additional parameters for topic modeling model.
-
     """
-    def __init__(
-            self,
-            df: pd.DataFrame,
-            id_column: str,
-            section_column: str,
-            column_filter: Dict[str, str],
-            model_type: str = "lda",
-            words_to_remove: List[str] = [],
-            topic_numbers_range: Tuple[int, int] = (2, 11),
-            coherence_measure: str = "c_v",
-            coherence_num_words: int = 20,
-            random_state: Optional[int] = None,
-            **kwargs):
+    def __init__(self,
+                 df: pd.DataFrame,
+                 id_column: str,
+                 section_column: str,
+                 column_filter: Dict[str, str],
+                 model_type: str = "lda",
+                 words_to_remove: List[str] = [],
+                 topic_numbers_range: Tuple[int, int] = (2, 11),
+                 coherence_measure: str = "c_v",
+                 coherence_num_words: int = 20,
+                 random_state: Optional[int] = None,
+                 **kwargs):
         self.model_type = model_type
         self.id_column = id_column
         self.section_column = section_column
@@ -79,10 +76,11 @@ class ModelOptimizer:
         self.topic_names_dict = {i: i for i in range(self.topics_num)}
 
     @property
-    def best_model(self):
+    def best_model(self) -> Model:
         return self.models[self.topics_num]
 
     def get_topics_df(self, num_words: int = 10) -> pd.DataFrame:
+        """Returns data frame with topic words and their importances."""
         result, is_word = self.best_model.get_topics(num_words=num_words)
         counter = Counter(self.filtered_lemmas.sum())
         id2word_dict = self.lemmas_dictionary
@@ -135,7 +133,8 @@ class ModelOptimizer:
         n_iter: int = 1000,
         init: str = "pca",
         learning_rate: Union[str, float] = "auto",
-    ):
+    ) -> pd.DataFrame:
+        """Returns mapping for t-SNE dimension reduction."""
         if not column:
             column = self.id_column
         topics_by_column = self.get_topic_probs_averaged_over_column(column)
@@ -149,7 +148,8 @@ class ModelOptimizer:
         metric: str = "euclidean",
         min_dist: float = 0.1,
         learning_rate: float = 1,
-    ):
+    ) -> pd.DataFrame:
+        """Returns mapping for UMAP dimension reduction."""
         if not column:
             column = self.id_column
         topics_by_column = self.get_topic_probs_averaged_over_column(column)
@@ -164,6 +164,7 @@ class ModelOptimizer:
         return mapping
 
     def save(self, path: str = ""):
+        """Saves model (encoded docs, dictionary, and model) to given path."""
         filter_name = "_".join([
             value.replace(":", "").replace(" ", "_").replace(",", "").replace("/", "_").replace("(", "").replace(
                 ")", "").replace("&", "").replace("-", "_") for value in self.column_filter.values()
@@ -177,15 +178,14 @@ class ModelOptimizer:
         num_keywords: int = 15,
         gpt3_model: str = "text-davinci-003",
         temperature: int = 0.5,
-    ) -> pd.DataFrame:
+    ):
+        """Generate topic names using GPT-3 model."""
         if openai.api_key == None:
-            warnings.warn(
-                """
+            warnings.warn("""
                 Topic names not updated: no api key set;
                 Key can be set using function set_openai_key(key)
                 Organization can be set using function set_openai_organization(organization)
-                """
-            )
+                """)
             return
         topics_keywords = self.get_topics_df(num_keywords)
         exculded = []
@@ -197,7 +197,8 @@ class ModelOptimizer:
             self.topic_names_dict[i] = title
             exculded.append(title)
 
-    def name_topics_manually(self, topic_names: Union[List[str], Dict[int, str]]) -> pd.DataFrame:
+    def name_topics_manually(self, topic_names: Union[List[str], Dict[int, str]]):
+        """Manually name topics."""
         if isinstance(topic_names, list):
             dict_update = {i: topic_names[i] for i in range(len(topic_names))}
         if isinstance(topic_names, dict):
@@ -211,6 +212,7 @@ class ModelOptimizer:
 
 
 def get_best_topics_num(cvs: Dict[int, float]) -> int:
+    """Returns best number of topics based on coherence values."""
     return max(cvs, key=cvs.get)
 
 
@@ -223,6 +225,7 @@ def get_models(
         random_state: Optional[int] = None,
         **kwargs,
 ) -> Dict[int, Model]:
+    """Returns dictionary of models with keys as number of topics."""
     return {
         num_topics: Model(num_topics=num_topics,
                           docs=docs,
@@ -242,6 +245,7 @@ def get_coherences(
     coherence: str = "c_v",
     num_words: int = 40,
 ) -> Dict[int, float]:
+    """Returns dictionary of coherence values with keys as number of topics."""
     return {
         num_topics: CoherenceModel(topics=model.get_topics_list(dictionary=dictionary, num_words=num_words),
                                    texts=texts,
@@ -252,10 +256,12 @@ def get_coherences(
 
 
 def set_openai_key(key: str):
+    """Sets OpenAI api key."""
     openai.api_key = key
 
 
 def _generate_prompt(keywords: list, weights: list, excluded: list = []) -> str:
+    """Generates prompt for GPT-3 model."""
     keywords_weights = [word + ": " + str(weight) for word, weight in zip(keywords, weights)]
     if len(excluded) > 0:
         excluded_str = f". Desctription must be different than: {', '.join(excluded)} "
@@ -266,5 +272,6 @@ def _generate_prompt(keywords: list, weights: list, excluded: list = []) -> str:
 
 
 def _generate_title(prompt: str, gpt3_model: str, temperature: int) -> str:
+    """Generates title for topic using GPT-3 model."""
     response = openai.Completion.create(model=gpt3_model, prompt=prompt, temperature=temperature)
     return response.choices[0].text.split("\n")[-1].replace('"', '')
