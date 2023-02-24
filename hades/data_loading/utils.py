@@ -112,11 +112,19 @@ def read_pages_from_pdf(path: str, start_page: int, end_page: int) -> str:
     return text
 
 
-def read_paragraphs(df: pd.DataFrame, path: str, country: str, root: str = "") -> pd.DataFrame:
-    result_dict = {"paragraph": [], "country": [], "text_path": []}
+def read_paragraphs(
+        df: pd.DataFrame,
+        id_column: str,
+        path: str,
+        id: str,
+        root: str = ""
+) -> pd.DataFrame:
+    result_dict = {"paragraph": [], id_column: [], "text_path": []}
     for i, row in df.iterrows():
-        file_name = row.paragraph.replace(":","").replace(" ","_").replace(",","").replace("/","_").replace("(","").replace(")","").replace("&","").replace("-","_").replace("__","_").lower()
-        txt_destination = f"{root}{country}_{file_name}.txt"
+        file_name = row.paragraph.replace(":","").replace(" ","_").replace(
+            ",","").replace("/","_").replace("(","").replace(")","").replace(
+            "&","").replace("-","_").replace("__","_").lower()
+        txt_destination = f"{root}{id}_{file_name}.txt"
         if row.start_page is None:
             text = ""
         else:
@@ -139,13 +147,14 @@ def read_paragraphs(df: pd.DataFrame, path: str, country: str, root: str = "") -
         n = text_file.write(text)
         text_file.close()
         result_dict["paragraph"].append(row.paragraph)
-        result_dict["country"].append(country)
+        result_dict[id_column].append(id)
         result_dict["text_path"].append(txt_destination)
     return pd.DataFrame(result_dict)
 
 
 def process_all_documents(
         directory_path: str,
+        id_column: str,
         paragraphs_names: Dict[str, List[str]],
         save_txt: str,
         end_paragraph: str,
@@ -157,6 +166,7 @@ def process_all_documents(
 
     Args:
         directory_path (str): directory with documents to process
+        id_column (str): name of the id column
         paragraphs_names (Dict[str, List[str]]): key - name of pargraph that should
         be displayed in the final df, value - list of possible names of this paragraph in toc
         save_txt (str): path to directory where txt files should be saved
@@ -170,14 +180,13 @@ def process_all_documents(
     """
     dir_list = os.listdir(directory_path)
     dir_list = [file for file in dir_list if file[-3:] == "pdf"]
-    df = pd.DataFrame({"paragraph": [], "country": [], "text_path": []})
+    df = pd.DataFrame({"paragraph": [], id_column: [], "text_path": []})
     for doc in dir_list:
-        print(doc)
         toc, toc_page = get_table_of_contents(directory_path + doc, toc_str)
         paragraphs_df = get_paragraphs_df(
             toc, pages_shift or toc_page, paragraphs_names, end_paragraph
         )
-        doc_df = read_paragraphs(paragraphs_df, directory_path + "/" + doc, doc[:-4], save_txt)
+        doc_df = read_paragraphs(paragraphs_df, id_column, directory_path + "/" + doc, doc[:-4], save_txt)
         df = pd.concat([df, doc_df], ignore_index=True)
     return df
 
