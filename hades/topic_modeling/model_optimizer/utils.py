@@ -1,9 +1,10 @@
 import json
 import os
 from typing import List, Optional, Union
+import warnings
+warnings.simplefilter(action='ignore', category=FutureWarning)
 import pandas as pd
 import openai
-import warnings
 
 from pyLDAvis import prepared_data_to_html
 from hades.summaries.summarize import prepare_app_summaries
