@@ -7,11 +7,12 @@ import pandas as pd
 import openai
 
 from pyLDAvis import prepared_data_to_html
-from hades.summaries.summarize import prepare_app_summaries
+from hades.summaries import make_section_summaries
 
 from hades.plots.topics import interactive_exploration
 from hades.topic_analysis.sentence_topic_analyser import SentenceTopicAnalyser
 from .model_optimizer import ModelOptimizer
+
 
 def save_data_for_app(
     model_optimizers: List[ModelOptimizer],
@@ -28,6 +29,7 @@ def save_data_for_app(
     save_model: bool = False,
     n_extract_sentences: int = 6,
     do_summaries: bool = True,
+    verbose_summaries: bool = False,
 ):
     """
     Saves data for app in path. After saving, the app can be started with the command: hades run-app --config 'path + "config.json"'.
@@ -95,12 +97,24 @@ def save_data_for_app(
     config_dict = {}
     config_dict['id_column'] = id_column
     config_dict['sections'] = {}
+    final_summaries = {}
     for model_optimizer in model_optimizers:
-        filter_name = "_".join([value.replace(":","").replace(" ","_")
-                                    .replace(",","").replace("/","_")
-                                    .replace("(","").replace(")","")
-                                    .replace("&","").replace("-","_")
-                                for value in model_optimizer.column_filter.values()])
+        if model_optimizer.name:
+            clean_name = model_optimizer.name
+            filter_name = model_optimizer.name.replace(":", "").replace(" ", "_").replace(
+                ",", "").replace("/", "_").replace("(", "").replace(")", "").replace("&", "").replace("-", "_")
+        else:
+            clean_name = " ".join([
+                value
+                for value in model_optimizer.data[model_optimizer.section_column].unique()
+            ])
+            filter_name = "_".join([
+                value.replace(":","").replace(" ","_")
+                    .replace(",","").replace("/","_")
+                    .replace("(","").replace(")","")
+                    .replace("&","").replace("-","_")
+                for value in model_optimizer.data[model_optimizer.section_column].unique()
+            ])
         topic_words = model_optimizer.get_topics_df(num_words)
         topics_by_column = model_optimizer.get_topic_probs_averaged_over_column(id_column, show_names=True)
         if save_model:
@@ -136,19 +150,23 @@ def save_data_for_app(
         with open(path + filter_name + "_essentials.json", 'w') as json_file:
             json.dump(id_sentence_dict, json_file)
 
-        config_dict['sections'][filter_name] = {"probs": path + filter_name + "_probs.csv",
+        config_dict['sections'][clean_name] = {"probs": path + filter_name + "_probs.csv",
             "mapping": path + filter_name + "_mapping.csv",
             "topic_words": path + filter_name + "_topic_words.csv",
             "vis": path + filter_name + "_vis.txt",
             "essentials": path + filter_name + "_essentials.json"}
-    config_dict["summaries_file"] = None
-    config_dict["additional_files"] = []
-    if do_summaries and openai.api_key is not None:
-        prepare_app_summaries(
+        
+        final_summaries[clean_name] = make_section_summaries(
             model_optimizer,
             n_extract_sentences,
-            path + "summaries.json"
+            clean_name,
+            do_summaries,
+            verbose_summaries,
         )
-        config_dict["summaries_file"] = path + "summaries.json"
+
+    config_dict["additional_files"] = []
+    with open(path + "summaries.json", 'w') as fp:
+        json.dump(final_summaries, fp)
+    config_dict["summaries_file"] = path + "summaries.json"
     with open(path + "config.json", 'w') as json_file:
         json.dump(config_dict, json_file)

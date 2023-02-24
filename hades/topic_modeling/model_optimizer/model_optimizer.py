@@ -42,6 +42,8 @@ class ModelOptimizer:
         Number of words used for calculating coherence measure.
     random_state: Optional[int], default None
         Random state for reproducibility.
+    name: Optional[str], default None
+        Name of model optimizer.
     **kwargs:
         Additional parameters for topic modeling model.
 
@@ -58,6 +60,7 @@ class ModelOptimizer:
             coherence_measure: str = "c_v",
             coherence_num_words: int = 20,
             random_state: Optional[int] = None,
+            name: Optional[str] = None,
             **kwargs):
         self.model_type = model_type
         self.id_column = id_column
@@ -77,6 +80,7 @@ class ModelOptimizer:
                                   self.coherence_num_words)
         self.topics_num = get_best_topics_num(self.cvs)
         self.topic_names_dict = {i: i for i in range(self.topics_num)}
+        self.name = name
 
     @property
     def best_model(self):

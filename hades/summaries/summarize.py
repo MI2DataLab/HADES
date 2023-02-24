@@ -3,6 +3,7 @@ import json
 import openai
 import pandas as pd
 from summarizer import Summarizer
+from typing import Dict
 import warnings
 
 from hades.topic_modeling.model_optimizer import ModelOptimizer
@@ -52,43 +53,38 @@ def make_summary(text: str, n_extract_sentences: int):
     return summary
 
 
-def prepare_app_summaries(
+def make_section_summaries(
     model_optimizer: ModelOptimizer,
     n_extract_sentences: int,
-    dump_path: str,
-    verbose=False
-):
-    if openai.api_key == None:
+    section_name: str = "-",
+    do_summaries: bool = True,
+    verbose: bool = False,
+) -> Dict[str, str]:
+    if openai.api_key == None and do_summaries:
+        do_summaries = False
+        verbose = False
         warnings.warn(
             """
             Summaries can't be made: no api key set;
             Key can be set using function set_openai_key(key)
             """
         )
-        return
-    final_summaries = dict()
     data = model_optimizer.data
-    sections = list(set(data[model_optimizer.section_column]))
     ids = list(set(data[model_optimizer.id_column]))
-    for section in sections:
-        section_dict = dict()
-        for id in ids:
-            if verbose:
-                print(f'Section: {section}, id: {id}')
+    section_summaries_dict = dict()
+    for id in ids:
+        if verbose:
+            print(f'Section: {section_name}, id: {id}')
+        if not do_summaries:
+            summary = 'Summary is not available for given ID'
+        else:
             try:
-                text = data[(data[model_optimizer.section_column] == section)
-                            & (data[model_optimizer.id_column] == id)]['text'].values[0]
+                text = data[(data[model_optimizer.id_column] == id)]['text'].values[0]
                 summary = make_summary(text, n_extract_sentences)
                 summary = summary.strip('\n')
             except:
                 if verbose:
-                    print(f'No text for section: {section}, id: {id}')
+                    print(f'No text for section: {section_name}, id: {id}')
                 summary = 'This section is not available for given ID'
-            section_dict[id] = summary
-            if verbose:
-                print(f'Summary: {summary}')
-        final_summaries[section] = section_dict
-
-    # Saving summaries to json file
-    with open(dump_path, 'w') as fp:
-        json.dump(final_summaries, fp)
+        section_summaries_dict[id] = summary
+    return section_summaries_dict
