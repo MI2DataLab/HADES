@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "hades-nlp"
-version = "0.1.0"
+version = "0.1.1"
 description = "Homologous Automated Document Exploration and Summarization - A powerful tool for comparing similarly structured documents"
 authors = ["Artur Żółkowski <artur.zolkowski@wp.pl>", "Piotr Wilczyński <piotrwil288@gmail.com>", "Mateusz Krzyziński <krzyzinskimateusz23@gmail.com>", "Emilia Wiśnios <wisniosemilia@gmail.com>"]
 packages = [
