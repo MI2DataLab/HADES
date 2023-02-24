@@ -1,14 +1,21 @@
-import click
-import pandas as pd
-import numpy as np
-import streamlit as st
-from copy import deepcopy
 import json
+from copy import deepcopy
+from typing import List
+
+import click
+import numpy as np
+import pandas as pd
 import spacy
+import streamlit as st
 from annotated_text import annotated_text
 
-import app.config as config
-import app.utils as utils
+from hades_app.config import Config
+from hades_app.utils import (calculate_distance_matrix, calculate_linkage_matrix,
+                    get_hdbscan_clusters, get_hierarchical_clusters,
+                    get_kmeans_clusters, manova_significant_difference_pval,
+                    plot_clusters, plot_correlation_heatmap, plot_map,
+                    plot_topic_distribution_radar,
+                    plot_topic_distribution_violinplot, plot_topics)
 
 
 @st.cache
@@ -27,10 +34,10 @@ def load_df_keywords_data(df_file_name: str, index_col=False) -> pd.DataFrame:
 
 
 @st.cache
-def load_additional_dfs() -> dict:
+def load_additional_dfs(additional_files_paths: List[str]) -> dict:
     return {
         path.split("/")[-1]:pd.read_csv(path, index_col=0)
-        for path in config.SETTINGS_DICT["additional_files"]
+        for path in additional_files_paths
     }
 
 
@@ -53,7 +60,7 @@ def load_essentials(file_path: str) -> json:
 @click.command()
 @click.option('--config-path', default='dupa', help='Path to config.json file.')
 def main(config_path: str):
-    config.load_settings_dict(config_path)
+    config = Config(config_path)
     if 'en' not in st.session_state:
             st.session_state.en =  spacy.load('en_core_web_sm')
 
@@ -106,16 +113,16 @@ def main(config_path: str):
     )
 
     with st.sidebar:
-        selected_section = st.selectbox("Select section", config.SECTIONS, index=0)
-        topics_load = load_df_data(config.SETTINGS_DICT["sections"][selected_section]["probs"])
-        mapping_load = load_df_mapping_data(config.SETTINGS_DICT["sections"][selected_section]["mapping"])
+        selected_section = st.selectbox("Select section", config.sections, index=0)
+        topics_load = load_df_data(config.settings_dict["sections"][selected_section]["probs"])
+        mapping_load = load_df_mapping_data(config.settings_dict["sections"][selected_section]["mapping"])
         keywords_load = load_df_keywords_data(
-            config.SETTINGS_DICT["sections"][selected_section]["topic_words"]
+            config.settings_dict["sections"][selected_section]["topic_words"]
         )
         essentials_load = load_essentials(
-            config.SETTINGS_DICT["sections"][selected_section]["essentials"]
+            config.settings_dict["sections"][selected_section]["essentials"]
         )
-        summaries_load = load_summaries(config.SETTINGS_DICT["summaries_file"])
+        summaries_load = load_summaries(config.settings_dict["summaries_file"])
 
         topics = deepcopy(topics_load)
         mapping = deepcopy(mapping_load)
@@ -128,14 +135,14 @@ def main(config_path: str):
 
         selected_mapping = st.selectbox(
             "Select mapping",
-            config.MAPPINGS,
+            config.mappings,
             index=0,
             help="Method for representation of documents on 2D plot based on their contents",
         )
 
         selected_clustering = st.selectbox(
             "Select clustering method",
-            config.CLUSTERINGS,
+            config.clusterings,
             index=0,
             help="Method used for grouping documents",
         )
@@ -143,8 +150,8 @@ def main(config_path: str):
         if selected_clustering == "Hierarchical":
             distance_metric = st.selectbox(
                 "Select metric",
-                config.METRIC_CHOICES.keys(),
-                format_func=lambda x: config.METRIC_CHOICES[x],
+                config.metric_choices.keys(),
+                format_func=lambda x: config.metric_choices[x],
                 index=0,
                 help="Metric for calculating distances between contents",
             )
@@ -156,7 +163,7 @@ def main(config_path: str):
                 help="Linkage scheme used for grouping documents",
             )
 
-            linkage = utils.calculate_linkage_matrix(
+            linkage = calculate_linkage_matrix(
                 topic_matrix,
                 linkage_method,
                 distance_metric,
@@ -171,7 +178,7 @@ def main(config_path: str):
                 format="%.5f",
                 help="Distance threshold used for creating groups",
             )
-            labels = utils.get_hierarchical_clusters(linkage, t).astype(str)
+            labels = get_hierarchical_clusters(linkage, t).astype(str)
 
         elif selected_clustering == "K-Means":
             n_clusters = st.number_input(
@@ -179,13 +186,13 @@ def main(config_path: str):
                 min_value=2,
                 value=4,
             )
-            labels = utils.get_kmeans_clusters(topic_matrix, n_clusters).astype(str)
+            labels = get_kmeans_clusters(topic_matrix, n_clusters).astype(str)
 
         elif selected_clustering == "HDBSCAN":
             distance_metric = st.selectbox(
                 "Select option",
-                config.METRIC_CHOICES.keys(),
-                format_func=lambda x: config.METRIC_CHOICES[x],
+                config.metric_choices.keys(),
+                format_func=lambda x: config.metric_choices[x],
                 index=0,
             )
             min_cluster_size = st.number_input(
@@ -206,12 +213,12 @@ def main(config_path: str):
                 format="%.5f",
             )
 
-            distance_matrix = utils.calculate_distance_matrix(
+            distance_matrix = calculate_distance_matrix(
                 pd.DataFrame(topic_matrix),
                 distance_metric,
             )
 
-            labels = utils.get_hdbscan_clusters(
+            labels = get_hdbscan_clusters(
                 distance_matrix,
                 min_cluster_size,
                 min_samples,
@@ -222,30 +229,30 @@ def main(config_path: str):
 
     sc1, sc2 = st.columns([4, 1])
     with sc1:
-        if config.COUNTRIES_DIVISION:
+        if config.countries_division:
             map_tab, clustering_tab = st.tabs(["Map", "Clustering"])
             with map_tab:
                 st.plotly_chart(
-                    utils.plot_map(topics, mapping, labels),
-                    config=config.DEFAULT_CONFIG,
+                    plot_map(topics, mapping, labels),
+                    config=config.default_config,
                     use_container_width=True,
                 )
             with clustering_tab:
                 st.plotly_chart(
-                    utils.plot_clusters(topics, mapping, labels, x, y),
-                    config=config.DEFAULT_CONFIG,
+                    plot_clusters(topics, mapping, labels, x, y),
+                    config=config.default_config,
                     use_container_width=True,
                 )
         else:
             st.plotly_chart(
-                    utils.plot_clusters(topics, mapping, labels, x, y, try_flags=False, text=config.ID_COLUMN),
-                    config=config.DEFAULT_CONFIG,
+                    plot_clusters(topics, mapping, labels, x, y, try_flags=False, text=config.id_column),
+                    config=config.default_config,
                     use_container_width=True,
             )
     with sc2:
         st.markdown(f"""</br></br></br></br></br></br>""", unsafe_allow_html=True)
         st.metric("Number of clusters", len(np.unique(labels)))
-        pval = utils.manova_significant_difference_pval(
+        pval = manova_significant_difference_pval(
             topics.iloc[:, 1:], labels
         )
         if pval < 1e-6:
@@ -256,7 +263,7 @@ def main(config_path: str):
                 "MANOVA p value",
                 "{:.6f}".format(round(pval, 6)),
             )
-        if config.COUNTRIES_DIVISION:
+        if config.countries_division:
             st.markdown(f"""</br></br>""", unsafe_allow_html=True)
 
 
@@ -272,7 +279,7 @@ def main(config_path: str):
 
 
     with tabs[0]:
-        selected_document = st.selectbox("Select document", sorted(topics[config.ID_COLUMN].unique()), index=0)
+        selected_document = st.selectbox("Select document", sorted(topics[config.id_column].unique()), index=0)
         st.header(f"Document details: {selected_document}")
 
         st.markdown(f"""<h4 style="padding-top: 0px;">Section summary:</h4>""", unsafe_allow_html=True)
@@ -309,14 +316,14 @@ def main(config_path: str):
         st.header(f"Compare documents")
         selected_entities = st.multiselect(
             label="Select document",
-            options=sorted(topics[config.ID_COLUMN].unique()),
-            default=sorted(topics[config.ID_COLUMN].unique())[:2],  # assumption that there are two entities
+            options=sorted(topics[config.id_column].unique()),
+            default=sorted(topics[config.id_column].unique())[:2],  # assumption that there are two entities
         )
         radar_col, topic_dist_col = st.columns(2)
         with radar_col:
             st.plotly_chart(
-                utils.plot_topic_distribution_radar(topics, selected_entities, app_format=True),
-                config=config.DEFAULT_CONFIG,
+                plot_topic_distribution_radar(topics, selected_entities, app_format=True),
+                config=config.default_config,
                 use_container_width=True,
                 width=500,
             )
@@ -330,8 +337,8 @@ def main(config_path: str):
             st.markdown(html_string, unsafe_allow_html=True)
         with topic_dist_col:
             st.plotly_chart(
-                utils.plot_topic_distribution_violinplot(topics, selected_entities),
-                config=config.DEFAULT_CONFIG,
+                plot_topic_distribution_violinplot(topics, selected_entities),
+                config=config.default_config,
                 use_container_width=True,
                 width=500,
             )
@@ -339,7 +346,7 @@ def main(config_path: str):
 
     with tabs[1]:
         st.header("Topic analysis")
-        with open(config.SETTINGS_DICT["sections"][selected_section]["vis"], "r") as file:
+        with open(config.settings_dict["sections"][selected_section]["vis"], "r") as file:
             html_string = file.read()
         st.components.v1.html(
             html_string,
@@ -362,7 +369,7 @@ def main(config_path: str):
             topic_num = i
             if i % 2:
                 keywords_col2.pyplot(
-                    utils.plot_topics(
+                    plot_topics(
                         keywords,
                         i,
                         topic_num,
@@ -372,7 +379,7 @@ def main(config_path: str):
                 )
             else:
                 keywords_col1.pyplot(
-                    utils.plot_topics(
+                    plot_topics(
                         keywords,
                         i,
                         topic_num,
@@ -383,12 +390,12 @@ def main(config_path: str):
         
 
     with tabs[2]:
-        if len(config.SETTINGS_DICT["additional_files"]) > 0:
+        if len(config.settings_dict["additional_files"]) > 0:
             st.header("Correlation heatmap")
             heatmap_params_col, heatmap_plot_col = st.columns(2)
             with heatmap_params_col:
                 topics_additional = topics.copy()
-                topics_additional[config.ID_COLUMN] = topics_additional[config.ID_COLUMN].apply(
+                topics_additional[config.id_column] = topics_additional[config.id_column].apply(
                     lambda x: x.lower()
                 )
                 num_topics = len(topics_additional.columns)-1
@@ -397,14 +404,14 @@ def main(config_path: str):
                     list(topics_additional.columns[1:(num_topics+1)]),
                     default=list(topics_additional.columns[1:(num_topics+1)]), 
                 )
-                additional_dfs = load_additional_dfs()
+                additional_dfs = load_additional_dfs(config.settings_dict["additional_files"])
                 selected_data = st.selectbox(
                     "Select additional data",
                     list(additional_dfs.keys()),
                     index=0,
                 )
                 df_selected = deepcopy(additional_dfs[selected_data])
-                df_selected[config.ID_COLUMN] = df_selected[config.ID_COLUMN].apply(lambda x: x.lower())
+                df_selected[config.id_column] = df_selected[config.id_column].apply(lambda x: x.lower())
                 default = list(df_selected.columns[1:])[0]
                 
                 selected_columns_additional = st.multiselect(
@@ -412,10 +419,10 @@ def main(config_path: str):
                     list(df_selected.columns[1:]),
                     default=default,
                 )
-                merged_df = topics_additional[selected_columns + [config.ID_COLUMN]].merge(
-                    df_selected[selected_columns_additional + [config.ID_COLUMN]],
+                merged_df = topics_additional[selected_columns + [config.id_column]].merge(
+                    df_selected[selected_columns_additional + [config.id_column]],
                     how="left",
-                    on=config.ID_COLUMN,
+                    on=config.id_column,
                 )
                 selected_method = st.selectbox(
                     "Select correlation method",
@@ -427,7 +434,7 @@ def main(config_path: str):
                 corr_df = corr_df.drop(selected_columns_additional, axis=0)
             with heatmap_plot_col:
                 st.markdown(f"""</br></br></br>""", unsafe_allow_html=True)
-                st.pyplot(utils.plot_correlation_heatmap(corr_df))
+                st.pyplot(plot_correlation_heatmap(corr_df))
         else:
             st.write("There aren't any additional files defined")
             st.write("Additional files can be defined in application settings")
