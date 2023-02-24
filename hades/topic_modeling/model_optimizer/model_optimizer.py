@@ -109,8 +109,8 @@ class ModelOptimizer:
     ):
         if not column:
             column = self.id_column
-        topics_by_country = self.get_topic_probs_averaged_over_column(column)
-        mapping = tsne_dim_reduction(topics_by_country, self.random_state, perplexity, n_iter, init, learning_rate)
+        topics_by_column = self.get_topic_probs_averaged_over_column(column)
+        mapping = tsne_dim_reduction(topics_by_column, self.random_state, perplexity, n_iter, init, learning_rate)
         return mapping
 
     def get_umap_mapping(
@@ -123,9 +123,9 @@ class ModelOptimizer:
     ):
         if not column:
             column = self.id_column
-        topics_by_country = self.get_topic_probs_averaged_over_column(column)
+        topics_by_column = self.get_topic_probs_averaged_over_column(column)
         mapping = umap_dim_reduction(
-            topics_by_country,
+            topics_by_column,
             self.random_state,
             n_neighbors,
             metric,

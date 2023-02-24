@@ -69,11 +69,11 @@ def save_data_for_app(
                                     .replace("&","").replace("-","_")
                                 for value in model_optimizer.column_filter.values()])
         topic_words = model_optimizer.get_topics_df(num_words)
-        topics_by_country = model_optimizer.get_topic_probs_averaged_over_column(id_column, show_names=True)
+        topics_by_column = model_optimizer.get_topic_probs_averaged_over_column(id_column, show_names=True)
         if save_model:
             model_optimizer.save(path=path)
         topic_words.to_csv(path + filter_name + "_topic_words.csv")
-        topics_by_country.to_csv(path + filter_name + "_probs.csv")
+        topics_by_column.to_csv(path + filter_name + "_probs.csv")
         tsne_mapping = model_optimizer.get_tsne_mapping(
             id_column,
             perplexity,
@@ -99,9 +99,9 @@ def save_data_for_app(
         sentence_topic_analyser = SentenceTopicAnalyser(model_optimizer)
         df_summarized = model_optimizer.data.groupby(id_column)['tokens'].sum()
         sentences_processed = sentence_topic_analyser.process_documents(df_summarized)
-        country_sentence_dict = dict(zip(list(df_summarized.index), sentences_processed))
+        id_sentence_dict = dict(zip(list(df_summarized.index), sentences_processed))
         with open(path + filter_name + "_essentials.json", 'w') as json_file:
-            json.dump(country_sentence_dict, json_file)
+            json.dump(id_sentence_dict, json_file)
 
         config_dict['sections'][filter_name] = {"probs": path + filter_name + "_probs.csv",
             "mapping": path + filter_name + "_mapping.csv",
