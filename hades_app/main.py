@@ -429,7 +429,7 @@ def main(config_path: str):
                     ["Pearson", "Kendall", "Spearman"],
                     index=0,
                 )
-                corr_df = merged_df.corr(method=selected_method.lower())
+                corr_df = merged_df.corr(method=selected_method.lower(), numeric_only=True)
                 corr_df = corr_df.drop(selected_columns, axis=1)
                 corr_df = corr_df.drop(selected_columns_additional, axis=0)
             with heatmap_plot_col:
