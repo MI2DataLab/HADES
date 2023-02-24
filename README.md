@@ -13,14 +13,13 @@ Latest released version of the `HADES` package is available on [Python Package I
 ```
 pip install -U hades-nlp
 ```
-
+The source code and development version is currently hosted on [GitHub](https://github.com/MI2DataLab/HADES).
 ## Usage
 The `HADES` package is designed to be used in a Python environment. The package can be imported as follows:
 
 ```python
 from hades.data_loading import load_processed_data
-from hades.topic_modeling import ModelOptimizer, save_data_for_app
-from hades.topic_modeling import set_openai_key
+from hades.topic_modeling import ModelOptimizer, save_data_for_app, set_openai_key
 from my_documents_data import PARAGRAPHS, COMMON_WORDS, STOPWORDS
 ```
 The `load_processed_data` function loads the documents to be processed. The `ModelOptimizer` class is used to optimize the topic modeling process. The `save_data_for_app` function saves the data for the interactive web app. The `set_openai_key` function sets the OpenAI API key.
@@ -68,8 +67,6 @@ When the data is saved, the interactive web app can be launched:
 ```sh
 hades run-app --config path/to/results/config.json
 ```
-
-The source code and development version is currently hosted on [GitHub](https://github.com/MI2DataLab/HADES).
 
 ***
 
