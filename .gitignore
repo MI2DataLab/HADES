@@ -55,18 +55,6 @@ coverage.xml
 *.mo
 *.pot
 
-# Django stuff:
-*.log
-local_settings.py
-db.sqlite3
-db.sqlite3-journal
-
-# Flask stuff:
-instance/
-.webassets-cache
-
-# Scrapy stuff:
-.scrapy
 
 # Sphinx documentation
 docs/_build/
@@ -127,20 +115,6 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
-
-resilience_results/
-social_results/
-necp_results/
-necp_results_flat/
-resilience_reports/
-social_reports/
-necp_reports/
-necp_reports_flat/
-
-make_summaries.py
-necp_flow.ipynb
-resilience_flow.ipynb
-social_flow.ipynb
 
 # MacOS hidden files
 *.DS_Store
