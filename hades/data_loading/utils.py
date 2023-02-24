@@ -7,8 +7,6 @@ import spacy
 from PyPDF2 import PdfReader
 from spacy.tokens import Doc, Token
 
-from hades.data_preprocessing.data_cleaning import text_cleaning
-
 
 def process_tokens(
         doc: pd.Series, nlp: spacy.language.Language, stop_words: List[str]
