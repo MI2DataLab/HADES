@@ -130,3 +130,5 @@ dmypy.json
 *.npy
 *.id2word
 *.state
+
+notebooks
