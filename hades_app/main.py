@@ -285,7 +285,7 @@ def main(config_path: str):
         st.markdown(f"""<h4 style="padding-top: 0px;">Section summary:</h4>""", unsafe_allow_html=True)
         st.write(summaries[selected_section][selected_document])
         st.markdown(f"""<hr style='margin: 0px;'>""", unsafe_allow_html=True)
-        clean_topics = [topic_name.split(" ", 1)[1] for topic_name in topic_names]
+        clean_topics =  list(topic_names)
         selected_topic = st.selectbox(
             "Select topic",
             clean_topics,
@@ -307,7 +307,7 @@ def main(config_path: str):
                     sentence.append((
                         str(word),
                         str(np.round(100*essential_sentences[selected_document][str(topic_num)]['words'][word_en[0].lemma_], 2)),
-                        "#afa"))
+                        "#ff4b4b"))
                 else:
                     sentence.append(str(word + " "))
             annotated_text(*sentence)
