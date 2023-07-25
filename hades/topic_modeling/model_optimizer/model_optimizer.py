@@ -215,6 +215,11 @@ class ModelOptimizer:
         else:
             warnings.warn("Topic names not updated: incorrect topic names given")
 
+    def get_topic_names(self):
+        """Prints topic names."""
+        for topic_id in range(len(self.topic_names_dict)):
+            print(f"{topic_id}:", self.topic_names_dict[topic_id])
+
 
 def get_best_topics_num(cvs: Dict[int, float]) -> int:
     """Returns best number of topics based on coherence values."""
