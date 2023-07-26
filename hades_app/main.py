@@ -197,8 +197,8 @@ def main(config_path: str):
             )
             min_cluster_size = st.number_input(
                 f"Select minimum cluster size",
-                min_value=1,
-                value=5,
+                min_value=2,
+                value=2,
             )
             min_samples = st.number_input(
                 f"Select minimum number of samples",

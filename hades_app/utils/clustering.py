@@ -2,9 +2,8 @@ from typing import Callable, Union
 import numpy as np
 import pandas as pd
 import scipy.cluster.hierarchy as hc
-from sklearn.cluster import KMeans
+from sklearn.cluster import KMeans, HDBSCAN
 import scipy.spatial as sp
-from hdbscan import HDBSCAN
 
 
 def calculate_linkage_matrix(
@@ -44,7 +43,7 @@ def get_kmeans_clusters(topic_probs: pd.DataFrame,
 
 def get_hdbscan_clusters(
     distance_matrix: pd.DataFrame,
-    min_cluster_size: int = 5,
+    min_cluster_size: int = 2,
     min_samples: int = None,
     cluster_selection_epsilon: int = 0.0,
 ):
