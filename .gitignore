@@ -132,3 +132,6 @@ dmypy.json
 *.state
 
 notebooks
+tutorial2
+tutorial/resilience_reports
+tutroial/results
