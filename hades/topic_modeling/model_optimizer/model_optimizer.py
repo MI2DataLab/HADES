@@ -3,9 +3,8 @@ import warnings
 from collections import Counter
 from copy import deepcopy
 from typing import Dict, List, Optional, Tuple, Union
-
+from transformers import pipeline
 import numpy as np
-import openai
 import pandas as pd
 from gensim.corpora.dictionary import Dictionary
 from gensim.models import CoherenceModel
@@ -181,24 +180,16 @@ class ModelOptimizer:
     def name_topics_automatically_gpt3(
         self,
         num_keywords: int = 15,
-        gpt3_model: str = "text-davinci-003",
-        temperature: int = 0.5,
+        model: str = "EleutherAI/gpt-neo-1.3B",
     ):
-        """Generate topic names using GPT-3 model."""
-        if openai.api_key == None:
-            warnings.warn("""
-                Topic names not updated: no api key set;
-                Key can be set using function set_openai_key(key)
-                Organization can be set using function set_openai_organization(organization)
-                """)
-            return
+
         topics_keywords = self.get_topics_df(num_keywords)
         exculded = []
         for i in range(self.topics_num):
             keywords = topics_keywords[topics_keywords["topic_id"] == i].word.to_list()
             weights = topics_keywords[topics_keywords["topic_id"] == i].importance.to_list()
             prompt = _generate_prompt(keywords, weights, exculded)
-            title = _generate_title(prompt, gpt3_model, temperature)
+            title = _generate_title(prompt, model)
             self.topic_names_dict[i] = title
             exculded.append(title)
 
@@ -259,12 +250,6 @@ def get_coherences(
         for num_topics, model in tqdm(models.items())
     }
 
-
-def set_openai_key(key: str):
-    """Sets OpenAI api key."""
-    openai.api_key = key
-
-
 def _generate_prompt(keywords: list, weights: list, excluded: list = []) -> str:
     """Generates prompt for GPT-3 model."""
     keywords_weights = [word + ": " + str(weight) for word, weight in zip(keywords, weights)]
@@ -276,7 +261,8 @@ def _generate_prompt(keywords: list, weights: list, excluded: list = []) -> str:
             ", ".join(keywords_weights) + excluded_str)
 
 
-def _generate_title(prompt: str, gpt3_model: str, temperature: int) -> str:
-    """Generates title for topic using GPT-3 model."""
-    response = openai.Completion.create(model=gpt3_model, prompt=prompt, temperature=temperature)
-    return response.choices[0].text.split("\n")[-1].replace('"', '')
+def _generate_title(prompt: str, model: str) -> str:
+    """Generates title for topic using generative model."""
+    generator = pipeline('text-generation', model=model)
+    response = generator(prompt, do_sample=True, min_length=50)
+    return response[0]['generated_text']

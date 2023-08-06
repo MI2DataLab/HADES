@@ -5,7 +5,6 @@ import warnings
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
 import pandas as pd
-import openai
 
 from pyLDAvis import prepared_data_to_html
 from hades.summaries import make_section_summaries
