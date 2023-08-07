@@ -10,7 +10,7 @@ A powerful tool for comparing similarly structured documents
 ## Installation
 Latest released version of the `HADES` package is available on [Python Package Index (PyPI)](https://pypi.org/project/hades-nlp/):
 
-1. Install spacy `en-core-web-lg` and `en-core-web-sm` models for English language according to the [instructions](https://spacy.io/models/en)
+1. Install spacy `en-core-web-sm` or `en-core-web-lg` model for English language according to the [instructions](https://spacy.io/models/en)
 
 2. Install `HADES` package using pip:
 

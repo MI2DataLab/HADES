@@ -130,3 +130,8 @@ dmypy.json
 *.npy
 *.id2word
 *.state
+
+notebooks
+tutorial2
+tutorial/resilience_reports
+tutroial/results
