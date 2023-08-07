@@ -1,2 +1,4 @@
 from .load_data import (load_dataframe, load_processed_data, preprocess_text,
                        process_text)
+
+from .utils import process_all_documents
