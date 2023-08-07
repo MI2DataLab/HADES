@@ -178,13 +178,13 @@ class ModelOptimizer:
         self.lemmas_dictionary.save(path + filter_name + "_dictionary.dict")
         self.best_model.save(path + filter_name + "_lda_model.model")
 
-    def name_topics_automatically_gpt3(
+    def name_topics_automatically(
         self,
         num_keywords: int = 15,
-        gpt3_model: str = "text-davinci-003",
+        gpt_model: str = "text-davinci-003",
         temperature: int = 0.5,
     ):
-        """Generate topic names using GPT-3 model."""
+        """Generate topic names using GPT model."""
         if openai.api_key == None:
             warnings.warn("""
                 Topic names not updated: no api key set;
@@ -198,7 +198,7 @@ class ModelOptimizer:
             keywords = topics_keywords[topics_keywords["topic_id"] == i].word.to_list()
             weights = topics_keywords[topics_keywords["topic_id"] == i].importance.to_list()
             prompt = _generate_prompt(keywords, weights, exculded)
-            title = _generate_title(prompt, gpt3_model, temperature)
+            title = _generate_title(prompt, gpt_model, temperature)
             self.topic_names_dict[i] = title
             exculded.append(title)
 
